@@ -16,9 +16,9 @@ function Router() {
     <Switch>
       <Route path="/" component={DashboardPage} />
       <Route path="/clients" component={ClientsPage} />
-      <Route path="/clients/:id" component={ClientDetailPage} />
       <Route path="/clients/add" component={AddClientPage} />
       <Route path="/clients/:id/notes/add" component={AddNotePage} />
+      <Route path="/clients/:id" component={ClientDetailPage} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
