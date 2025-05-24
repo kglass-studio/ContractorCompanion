@@ -46,11 +46,42 @@ let db: any = null;
 try {
   if (process.env.DATABASE_URL) {
     try {
-      const sql = neon(process.env.DATABASE_URL);
-      db = drizzle(sql);
-      log("Database connection established successfully", "database");
+      // Parse and sanitize the connection string for Supabase
+      let connectionString = process.env.DATABASE_URL.trim();
+      
+      // Fix common issues in connection strings
+      // Remove duplicate protocol or domain sections if present
+      if (connectionString.includes('postgresql://') && connectionString.indexOf('postgresql://', connectionString.indexOf('postgresql://') + 1) !== -1) {
+        // Extract just the first part up to the first complete URL
+        connectionString = connectionString.substring(0, connectionString.indexOf('@') + 1) + 
+          connectionString.substring(connectionString.lastIndexOf('@') + 1);
+      }
+      
+      // Ensure special characters in password are properly encoded
+      if (connectionString.includes('#')) {
+        connectionString = connectionString.replace(/#/g, '%23');
+      }
+      
+      log(`Attempting connection with sanitized URL`, "database");
+      
+      try {
+        // For Supabase, use the async client
+        const sql = neon(connectionString);
+        
+        // Initialize the database with Drizzle
+        db = drizzle(sql);
+        
+        // Test the connection with a simple query
+        await sql`SELECT 1`;
+        
+        log("Database connection established successfully", "database");
+      } catch (connError) {
+        log(`Connection test failed: ${connError}`, "error");
+        throw connError;
+      }
     } catch (dbError) {
       log(`Database connection error: ${dbError}`, "error");
+      log("Falling back to in-memory storage", "database");
       // Will fall back to memory storage
     }
   } else {

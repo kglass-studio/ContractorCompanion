@@ -25,7 +25,7 @@ function ClientCard({ client }: ClientCardProps) {
   });
 
   const getLatestNote = () => {
-    if (!notes || notes.length === 0) {
+    if (!notes || !Array.isArray(notes) || notes.length === 0) {
       return "No notes yet";
     }
     
