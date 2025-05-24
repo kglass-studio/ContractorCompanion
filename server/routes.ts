@@ -1,0 +1,281 @@
+import express, { type Express, Request, Response } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import {
+  insertClientSchema,
+  insertNoteSchema,
+  insertFollowupSchema,
+} from "@shared/schema";
+import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  const apiRouter = express.Router();
+  
+  // Clients endpoints
+  apiRouter.get("/clients", async (req: Request, res: Response) => {
+    const status = req.query.status as string | undefined;
+    try {
+      if (status) {
+        const clients = await storage.getClientsByStatus(status);
+        res.json(clients);
+      } else {
+        const clients = await storage.getClients();
+        res.json(clients);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
+
+  apiRouter.get("/clients/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+
+      const client = await storage.getClient(id);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      res.json(client);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch client" });
+    }
+  });
+
+  apiRouter.post("/clients", async (req: Request, res: Response) => {
+    try {
+      const clientData = insertClientSchema.parse(req.body);
+      const client = await storage.createClient(clientData);
+      res.status(201).json(client);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to create client" });
+    }
+  });
+
+  apiRouter.put("/clients/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+
+      const clientData = insertClientSchema.partial().parse(req.body);
+      const client = await storage.updateClient(id, clientData);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      res.json(client);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update client" });
+    }
+  });
+
+  apiRouter.delete("/clients/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+
+      const success = await storage.deleteClient(id);
+      if (!success) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete client" });
+    }
+  });
+
+  // Notes endpoints
+  apiRouter.get("/clients/:clientId/notes", async (req: Request, res: Response) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+
+      const notes = await storage.getNotes(clientId);
+      res.json(notes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notes" });
+    }
+  });
+
+  apiRouter.post("/notes", async (req: Request, res: Response) => {
+    try {
+      const noteData = insertNoteSchema.parse(req.body);
+      const note = await storage.createNote(noteData);
+      res.status(201).json(note);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to create note" });
+    }
+  });
+
+  apiRouter.delete("/notes/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid note ID" });
+      }
+
+      const success = await storage.deleteNote(id);
+      if (!success) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete note" });
+    }
+  });
+
+  // Followups endpoints
+  apiRouter.get("/followups", async (req: Request, res: Response) => {
+    try {
+      const today = req.query.today === "true";
+      
+      if (today) {
+        const followups = await storage.getTodaysFollowups();
+        res.json(followups);
+      } else {
+        const followups = await storage.getFollowups();
+        res.json(followups);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch followups" });
+    }
+  });
+
+  apiRouter.get("/clients/:clientId/followups", async (req: Request, res: Response) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+
+      const followups = await storage.getFollowupsByClient(clientId);
+      res.json(followups);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch followups" });
+    }
+  });
+
+  apiRouter.post("/followups", async (req: Request, res: Response) => {
+    try {
+      const followupData = insertFollowupSchema.parse(req.body);
+      const followup = await storage.createFollowup(followupData);
+      res.status(201).json(followup);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to create followup" });
+    }
+  });
+
+  apiRouter.put("/followups/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid followup ID" });
+      }
+
+      const followupData = insertFollowupSchema.partial().parse(req.body);
+      const followup = await storage.updateFollowup(id, followupData);
+      if (!followup) {
+        return res.status(404).json({ message: "Followup not found" });
+      }
+
+      res.json(followup);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update followup" });
+    }
+  });
+
+  apiRouter.put("/followups/:id/complete", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid followup ID" });
+      }
+
+      const followup = await storage.completeFollowup(id);
+      if (!followup) {
+        return res.status(404).json({ message: "Followup not found" });
+      }
+
+      res.json(followup);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to complete followup" });
+    }
+  });
+
+  apiRouter.delete("/followups/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid followup ID" });
+      }
+
+      const success = await storage.deleteFollowup(id);
+      if (!success) {
+        return res.status(404).json({ message: "Followup not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete followup" });
+    }
+  });
+
+  // Dashboard counts
+  apiRouter.get("/dashboard/counts", async (req: Request, res: Response) => {
+    try {
+      const leads = await storage.getClientsByStatus("lead");
+      const quoted = await storage.getClientsByStatus("quoted");
+      const scheduled = await storage.getClientsByStatus("scheduled");
+      const completed = await storage.getClientsByStatus("completed");
+      const paid = await storage.getClientsByStatus("paid");
+      
+      res.json({
+        leads: leads.length,
+        quoted: quoted.length,
+        scheduled: scheduled.length,
+        completed: completed.length,
+        paid: paid.length
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch dashboard counts" });
+    }
+  });
+
+  // Register API routes with /api prefix
+  app.use("/api", apiRouter);
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
