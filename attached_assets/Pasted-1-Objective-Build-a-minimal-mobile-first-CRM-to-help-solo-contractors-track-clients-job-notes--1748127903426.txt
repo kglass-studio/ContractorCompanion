@@ -1,0 +1,125 @@
+1. 🎯 Objective
+Build a minimal, mobile-first CRM to help solo contractors track clients, job notes, follow-ups, and job status without the bloat of enterprise CRMs or scheduling apps. The app should focus on ease of use, offline-friendly workflows, and speed.
+
+2. 🧑‍💼 Target Users
+General handypeople
+
+Mobile service providers (cleaners, notaries, dog walkers, photographers)
+
+Gig workers juggling repeat clients
+
+Blue-collar contractors who are not “tech people”
+
+Managing fewer than 100 clients at a time
+
+3. 🧩 Core Features (MVP Scope)
+3.1 Client Management
+Add new client (name, phone, email, address)
+
+Edit client info
+
+List view of all clients (sortable by recent activity)
+
+3.2 Job Notes
+For each client:
+
+Free-text note field
+
+Photo upload
+
+Optional voice memo attachment (v2)
+
+Date-stamped entries
+
+3.3 Follow-Up Reminders
+Add a “next step” (e.g., “Call to confirm”)
+
+Schedule date/time
+
+Local notification or email reminder
+
+3.4 Job Status
+Dropdown or tags: “Lead”, “Quoted”, “Scheduled”, “Completed”, “Paid”
+
+Default filter = active jobs
+
+3.5 Location Integration
+Store job site address per client
+
+Button to open Google Maps with one tap
+
+3.6 Minimal Dashboard
+Today’s follow-ups
+
+Quick jump to clients by status
+
+“Add Client” button always visible
+
+4. ⚙️ Technical Requirements
+Frontend:
+Framework: React or React Native (mobile-first)
+
+Components: TailwindCSS or simple inline styling
+
+PWA-friendly (if web)
+
+Backend:
+Database: Supabase (Postgres, auth, storage)
+
+Auth: Supabase Auth or Clerk.dev
+
+Storage: Supabase (for photos)
+
+Optional: Firebase Cloud Messaging for push notifications (or local notifications in React Native)
+
+APIs:
+Google Maps (link to open directions)
+
+Email (SMTP or SendGrid for reminders)
+
+5. 💳 Monetization (Optional for MVP, but ready)
+Stripe integration for tiered plans:
+
+Free: up to 5 clients
+
+Pro: $15/month unlimited
+
+No user management or billing dashboard needed in v1—use manual Stripe Checkout links or Payhip
+
+6. 📱 User Flow (Simplified)
+plaintext
+Copy
+Edit
+Home →
+  - "Add New Client" →
+     - Enter contact info, job notes, set next step
+  - "Clients List" →
+     - Tap to view client profile
+       - View/edit notes, job status, follow-up date
+       - Map link, send message (mailto or sms:)
+  - "Today" →
+     - See today’s reminders, sorted by time
+7. 🧪 Validation Plan
+Create a waitlist landing page with basic value props
+
+Share on Reddit, Facebook groups, contractor Discords
+
+Offer beta access in exchange for feedback
+
+Email list via ConvertKit or Beehiiv to test upgrade path
+
+8. 📌 Future Features (Post-MVP)
+Voice memo-to-text transcription (AI)
+
+Team mode (add 1–2 crew members)
+
+Quick invoice send button
+
+Lead intake form for client websites
+
+Calendar view
+
+Export job history to PDF
+
+Offline mode (local storage + sync)
+
