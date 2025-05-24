@@ -21,8 +21,11 @@ export async function getClient(id: number): Promise<Client> {
 }
 
 export async function createClient(client: InsertClient): Promise<Client> {
+  console.log("API createClient called with:", client);
   const res = await apiRequest("POST", "/api/clients", client);
-  return res.json();
+  const data = await res.json();
+  console.log("API createClient response:", data);
+  return data;
 }
 
 export async function updateClient(id: number, client: Partial<Client>): Promise<Client> {

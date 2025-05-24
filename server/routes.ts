@@ -48,10 +48,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/clients", async (req: Request, res: Response) => {
     try {
+      console.log("Client creation request received:", req.body);
       const clientData = insertClientSchema.parse(req.body);
+      console.log("Validated client data:", clientData);
       const client = await storage.createClient(clientData);
+      console.log("Client created:", client);
       res.status(201).json(client);
     } catch (error) {
+      console.error("Error creating client:", error);
       if (error instanceof z.ZodError) {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: validationError.message });

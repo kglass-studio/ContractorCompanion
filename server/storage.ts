@@ -865,13 +865,29 @@ export class MemStorage implements IStorage {
   async createClient(insertClient: InsertClient): Promise<Client> {
     const id = this.clientId++;
     const now = new Date();
+    
+    // Ensure we're using the correct status value from JobStatus
+    const status = Object.values(JobStatus).includes(insertClient.status as any) 
+      ? insertClient.status as any
+      : JobStatus.LEAD;
+    
+    // Ensure all fields are properly set with default values if needed
     const client: Client = {
-      ...insertClient,
       id,
+      name: insertClient.name,
+      phone: insertClient.phone,
+      email: insertClient.email || null,
+      addressLine1: insertClient.addressLine1 || null,
+      city: insertClient.city || null,
+      state: insertClient.state || null,
+      zipCode: insertClient.zipCode || null,
+      status,
       createdAt: now,
       updatedAt: now,
     };
+    
     this.clients.set(id, client);
+    console.log("Client added to in-memory storage:", client);
     return client;
   }
 
@@ -1264,4 +1280,10 @@ export class DatabaseStorage implements IStorage {
 
 // Export either the database storage or memory storage based on connection status
 // For now, use memory storage to ensure the app works while we fix the database
+// Initialize database connection on startup
+initDatabase().catch((error) => {
+  log(`Database initialization error: ${error}`, "error");
+});
+
+// Export the storage implementation
 export const storage = new MemStorage();
