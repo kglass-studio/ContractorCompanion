@@ -10,9 +10,6 @@ import {
   type InsertFollowup,
   JobStatus,
 } from "@shared/schema";
-import { eq, and, gte, lt, desc, asc } from "drizzle-orm";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
 import { log } from "./vite";
 
 export interface IStorage {
@@ -44,10 +41,7 @@ export interface IStorage {
 // Import required database packages
 import { Pool } from 'pg';
 
-// Try to connect to database
-let db: any = null;
-
-// Global database pool
+// Database connection
 let pool: Pool | null = null;
 
 // Initialize database connection
@@ -55,7 +49,7 @@ const initDatabase = async () => {
   try {
     if (process.env.DATABASE_URL) {
       try {
-        // Create a connection pool
+        // Create a database connection
         pool = new Pool({
           connectionString: process.env.DATABASE_URL,
         });
@@ -66,12 +60,22 @@ const initDatabase = async () => {
         if (result.rows.length > 0) {
           // Create tables if they don't exist
           await createTablesIfNotExist();
-          log("Database connection established successfully", "database");
+          log("PostgreSQL database connection established successfully", "database");
         }
       } catch (dbError) {
-        log(`Database connection error: ${dbError}`, "error");
-        log("Falling back to in-memory storage", "database");
-        pool = null; // Reset pool on error
+        try {
+          // Try Neon serverless connection as a fallback
+          sql = neon(process.env.DATABASE_URL);
+          db = drizzle(sql);
+          await sql`SELECT 1`;
+          log("Neon database connection established successfully", "database");
+        } catch (neonError) {
+          log(`Database connection error: ${dbError}, Neon error: ${neonError}`, "error");
+          log("Falling back to in-memory storage", "database");
+          pool = null;
+          db = null;
+          sql = null;
+        }
       }
     } else {
       log("No DATABASE_URL provided, using in-memory storage", "database");
@@ -79,6 +83,8 @@ const initDatabase = async () => {
   } catch (error) {
     log(`Failed to connect to database: ${error}`, "error");
     pool = null;
+    db = null;
+    sql = null;
   }
 };
 
