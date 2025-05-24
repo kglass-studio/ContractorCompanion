@@ -41,55 +41,101 @@ export interface IStorage {
   deleteFollowup(id: number): Promise<boolean>;
 }
 
+// Import required database packages
+import { Pool } from 'pg';
+
 // Try to connect to database
 let db: any = null;
-try {
-  if (process.env.DATABASE_URL) {
-    try {
-      // Parse and sanitize the connection string for Supabase
-      let connectionString = process.env.DATABASE_URL.trim();
-      
-      // Fix common issues in connection strings
-      // Remove duplicate protocol or domain sections if present
-      if (connectionString.includes('postgresql://') && connectionString.indexOf('postgresql://', connectionString.indexOf('postgresql://') + 1) !== -1) {
-        // Extract just the first part up to the first complete URL
-        connectionString = connectionString.substring(0, connectionString.indexOf('@') + 1) + 
-          connectionString.substring(connectionString.lastIndexOf('@') + 1);
-      }
-      
-      // Ensure special characters in password are properly encoded
-      if (connectionString.includes('#')) {
-        connectionString = connectionString.replace(/#/g, '%23');
-      }
-      
-      log(`Attempting connection with sanitized URL`, "database");
-      
+
+// Global database pool
+let pool: Pool | null = null;
+
+// Initialize database connection
+const initDatabase = async () => {
+  try {
+    if (process.env.DATABASE_URL) {
       try {
-        // For Supabase, use the async client
-        const sql = neon(connectionString);
+        // Create a connection pool
+        pool = new Pool({
+          connectionString: process.env.DATABASE_URL,
+        });
         
-        // Initialize the database with Drizzle
-        db = drizzle(sql);
+        // Test the connection
+        const result = await pool.query('SELECT 1');
         
-        // Test the connection with a simple query
-        await sql`SELECT 1`;
-        
-        log("Database connection established successfully", "database");
-      } catch (connError) {
-        log(`Connection test failed: ${connError}`, "error");
-        throw connError;
+        if (result.rows.length > 0) {
+          // Create tables if they don't exist
+          await createTablesIfNotExist();
+          log("Database connection established successfully", "database");
+        }
+      } catch (dbError) {
+        log(`Database connection error: ${dbError}`, "error");
+        log("Falling back to in-memory storage", "database");
+        pool = null; // Reset pool on error
       }
-    } catch (dbError) {
-      log(`Database connection error: ${dbError}`, "error");
-      log("Falling back to in-memory storage", "database");
-      // Will fall back to memory storage
+    } else {
+      log("No DATABASE_URL provided, using in-memory storage", "database");
     }
-  } else {
-    log("No DATABASE_URL provided, using in-memory storage", "database");
+  } catch (error) {
+    log(`Failed to connect to database: ${error}`, "error");
+    pool = null;
   }
-} catch (error) {
-  log(`Failed to connect to database: ${error}`, "error");
+};
+
+// Function to create tables if they don't exist
+async function createTablesIfNotExist() {
+  try {
+    // Create clients table
+    await sql`
+      CREATE TABLE IF NOT EXISTS clients (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        email VARCHAR(255),
+        address_line1 VARCHAR(255),
+        city VARCHAR(100),
+        state VARCHAR(50),
+        zip_code VARCHAR(20),
+        status VARCHAR(20) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    // Create notes table
+    await sql`
+      CREATE TABLE IF NOT EXISTS notes (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+        text TEXT NOT NULL,
+        photo_url VARCHAR(255),
+        voice_url VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    // Create followups table
+    await sql`
+      CREATE TABLE IF NOT EXISTS followups (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+        action VARCHAR(255) NOT NULL,
+        scheduled_date TIMESTAMP NOT NULL,
+        is_completed BOOLEAN DEFAULT FALSE,
+        reminder BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    log("Database tables created successfully", "database");
+  } catch (error) {
+    log(`Failed to create tables: ${error}`, "error");
+    throw error;
+  }
 }
+
+// Initialize the database
+initDatabase();
 
 export class MemStorage implements IStorage {
   private clients: Map<number, Client>;
