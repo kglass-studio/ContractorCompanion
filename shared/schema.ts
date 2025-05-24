@@ -87,5 +87,7 @@ export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Note = typeof notes.$inferSelect;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 
-export type Followup = typeof followups.$inferSelect;
+export type Followup = typeof followups.$inferSelect & {
+  clientName?: string;
+};
 export type InsertFollowup = z.infer<typeof insertFollowupSchema>;

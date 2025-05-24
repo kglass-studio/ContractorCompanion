@@ -84,9 +84,14 @@ const initDatabase = async () => {
 
 // Function to create tables if they don't exist
 async function createTablesIfNotExist() {
+  if (!pool) {
+    log("Cannot create tables - no database connection", "error");
+    return;
+  }
+  
   try {
     // Create clients table
-    await sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS clients (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -100,10 +105,10 @@ async function createTablesIfNotExist() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
     
     // Create notes table
-    await sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS notes (
         id SERIAL PRIMARY KEY,
         client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -112,10 +117,10 @@ async function createTablesIfNotExist() {
         voice_url VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
     
     // Create followups table
-    await sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS followups (
         id SERIAL PRIMARY KEY,
         client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -125,7 +130,7 @@ async function createTablesIfNotExist() {
         reminder BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
     
     log("Database tables created successfully", "database");
   } catch (error) {
@@ -136,6 +141,695 @@ async function createTablesIfNotExist() {
 
 // Initialize the database
 initDatabase();
+
+// Create a PostgreSQL implementation of the storage interface
+export class PostgresStorage implements IStorage {
+  // Clients methods
+  async getClients(): Promise<Client[]> {
+    try {
+      if (!pool) return [];
+      
+      const result = await pool.query(`
+        SELECT * FROM clients ORDER BY created_at DESC
+      `);
+      
+      return result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        addressLine1: row.address_line1,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zip_code,
+        status: row.status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+    } catch (error) {
+      log(`DB Error in getClients: ${error}`, "error");
+      return [];
+    }
+  }
+  
+  async getClientsByStatus(status: string): Promise<Client[]> {
+    try {
+      if (!pool) return [];
+      
+      const result = await pool.query(`
+        SELECT * FROM clients WHERE status = $1 ORDER BY created_at DESC
+      `, [status]);
+      
+      return result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        addressLine1: row.address_line1,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zip_code,
+        status: row.status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+    } catch (error) {
+      log(`DB Error in getClientsByStatus: ${error}`, "error");
+      return [];
+    }
+  }
+  
+  async getClient(id: number): Promise<Client | undefined> {
+    try {
+      if (!pool) return undefined;
+      
+      const result = await pool.query(`
+        SELECT * FROM clients WHERE id = $1
+      `, [id]);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        addressLine1: row.address_line1,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zip_code,
+        status: row.status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      };
+    } catch (error) {
+      log(`DB Error in getClient: ${error}`, "error");
+      return undefined;
+    }
+  }
+  
+  async createClient(client: InsertClient): Promise<Client> {
+    try {
+      if (!pool) throw new Error("Database not available");
+      
+      const result = await pool.query(`
+        INSERT INTO clients (name, phone, email, address_line1, city, state, zip_code, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *
+      `, [
+        client.name, 
+        client.phone, 
+        client.email || null, 
+        client.addressLine1 || null,
+        client.city || null,
+        client.state || null,
+        client.zipCode || null,
+        client.status
+      ]);
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        addressLine1: row.address_line1,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zip_code,
+        status: row.status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      };
+    } catch (error) {
+      log(`DB Error in createClient: ${error}`, "error");
+      throw error;
+    }
+  }
+  
+  async updateClient(id: number, updateData: Partial<Client>): Promise<Client | undefined> {
+    try {
+      if (!pool) return undefined;
+      
+      // Build the update query dynamically
+      const updates: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+      
+      if (updateData.name !== undefined) {
+        updates.push(`name = $${paramCount++}`);
+        values.push(updateData.name);
+      }
+      
+      if (updateData.phone !== undefined) {
+        updates.push(`phone = $${paramCount++}`);
+        values.push(updateData.phone);
+      }
+      
+      if (updateData.email !== undefined) {
+        updates.push(`email = $${paramCount++}`);
+        values.push(updateData.email);
+      }
+      
+      if (updateData.addressLine1 !== undefined) {
+        updates.push(`address_line1 = $${paramCount++}`);
+        values.push(updateData.addressLine1);
+      }
+      
+      if (updateData.city !== undefined) {
+        updates.push(`city = $${paramCount++}`);
+        values.push(updateData.city);
+      }
+      
+      if (updateData.state !== undefined) {
+        updates.push(`state = $${paramCount++}`);
+        values.push(updateData.state);
+      }
+      
+      if (updateData.zipCode !== undefined) {
+        updates.push(`zip_code = $${paramCount++}`);
+        values.push(updateData.zipCode);
+      }
+      
+      if (updateData.status !== undefined) {
+        updates.push(`status = $${paramCount++}`);
+        values.push(updateData.status);
+      }
+      
+      updates.push(`updated_at = NOW()`);
+      
+      // If there's nothing to update, return the existing client
+      if (updates.length === 1) {
+        return this.getClient(id);
+      }
+      
+      // Add the client id as the last parameter
+      values.push(id);
+      
+      const result = await pool.query(`
+        UPDATE clients
+        SET ${updates.join(', ')}
+        WHERE id = $${paramCount}
+        RETURNING *
+      `, values);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        addressLine1: row.address_line1,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zip_code,
+        status: row.status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      };
+    } catch (error) {
+      log(`DB Error in updateClient: ${error}`, "error");
+      return undefined;
+    }
+  }
+  
+  async deleteClient(id: number): Promise<boolean> {
+    try {
+      if (!pool) return false;
+      
+      const result = await pool.query(`
+        DELETE FROM clients WHERE id = $1
+        RETURNING id
+      `, [id]);
+      
+      return result.rows.length > 0;
+    } catch (error) {
+      log(`DB Error in deleteClient: ${error}`, "error");
+      return false;
+    }
+  }
+  
+  // Notes methods
+  async getNotes(clientId: number): Promise<Note[]> {
+    try {
+      if (!pool) return [];
+      
+      const result = await pool.query(`
+        SELECT * FROM notes
+        WHERE client_id = $1
+        ORDER BY created_at DESC
+      `, [clientId]);
+      
+      return result.rows.map((row) => ({
+        id: row.id,
+        clientId: row.client_id,
+        text: row.text,
+        photoUrl: row.photo_url,
+        voiceUrl: row.voice_url,
+        createdAt: row.created_at
+      }));
+    } catch (error) {
+      log(`DB Error in getNotes: ${error}`, "error");
+      return [];
+    }
+  }
+  
+  async getNote(id: number): Promise<Note | undefined> {
+    try {
+      if (!pool) return undefined;
+      
+      const result = await pool.query(`
+        SELECT * FROM notes WHERE id = $1
+      `, [id]);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        text: row.text,
+        photoUrl: row.photo_url,
+        voiceUrl: row.voice_url,
+        createdAt: row.created_at
+      };
+    } catch (error) {
+      log(`DB Error in getNote: ${error}`, "error");
+      return undefined;
+    }
+  }
+  
+  async createNote(note: InsertNote): Promise<Note> {
+    try {
+      if (!pool) throw new Error("Database not available");
+      
+      const result = await pool.query(`
+        INSERT INTO notes (client_id, text, photo_url, voice_url)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `, [
+        note.clientId,
+        note.text,
+        note.photoUrl || null,
+        note.voiceUrl || null
+      ]);
+      
+      // Also update the client's updated_at timestamp
+      await pool.query(`
+        UPDATE clients
+        SET updated_at = NOW()
+        WHERE id = $1
+      `, [note.clientId]);
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        text: row.text,
+        photoUrl: row.photo_url,
+        voiceUrl: row.voice_url,
+        createdAt: row.created_at
+      };
+    } catch (error) {
+      log(`DB Error in createNote: ${error}`, "error");
+      throw error;
+    }
+  }
+  
+  async deleteNote(id: number): Promise<boolean> {
+    try {
+      if (!pool) return false;
+      
+      // First get the client_id for the note
+      const noteResult = await pool.query(`
+        SELECT client_id FROM notes WHERE id = $1
+      `, [id]);
+      
+      if (noteResult.rows.length === 0) {
+        return false;
+      }
+      
+      const clientId = noteResult.rows[0].client_id;
+      
+      // Delete the note
+      const result = await pool.query(`
+        DELETE FROM notes WHERE id = $1
+        RETURNING id
+      `, [id]);
+      
+      // Update the client's updated_at timestamp
+      if (result.rows.length > 0) {
+        await pool.query(`
+          UPDATE clients
+          SET updated_at = NOW()
+          WHERE id = $1
+        `, [clientId]);
+      }
+      
+      return result.rows.length > 0;
+    } catch (error) {
+      log(`DB Error in deleteNote: ${error}`, "error");
+      return false;
+    }
+  }
+  
+  // Followups methods
+  async getFollowups(): Promise<Followup[]> {
+    try {
+      if (!pool) return [];
+      
+      const result = await pool.query(`
+        SELECT f.*, c.name as client_name
+        FROM followups f
+        JOIN clients c ON f.client_id = c.id
+        ORDER BY f.scheduled_date ASC
+      `);
+      
+      return result.rows.map((row) => ({
+        id: row.id,
+        clientId: row.client_id,
+        action: row.action,
+        scheduledDate: row.scheduled_date,
+        isCompleted: row.is_completed,
+        reminder: row.reminder,
+        createdAt: row.created_at,
+        clientName: row.client_name
+      }));
+    } catch (error) {
+      log(`DB Error in getFollowups: ${error}`, "error");
+      return [];
+    }
+  }
+  
+  async getFollowupsByClient(clientId: number): Promise<Followup[]> {
+    try {
+      if (!pool) return [];
+      
+      const result = await pool.query(`
+        SELECT f.*, c.name as client_name
+        FROM followups f
+        JOIN clients c ON f.client_id = c.id
+        WHERE f.client_id = $1
+        ORDER BY f.scheduled_date ASC
+      `, [clientId]);
+      
+      return result.rows.map((row) => ({
+        id: row.id,
+        clientId: row.client_id,
+        action: row.action,
+        scheduledDate: row.scheduled_date,
+        isCompleted: row.is_completed,
+        reminder: row.reminder,
+        createdAt: row.created_at,
+        clientName: row.client_name
+      }));
+    } catch (error) {
+      log(`DB Error in getFollowupsByClient: ${error}`, "error");
+      return [];
+    }
+  }
+  
+  async getTodaysFollowups(): Promise<Followup[]> {
+    try {
+      if (!pool) return [];
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const result = await pool.query(`
+        SELECT f.*, c.name as client_name
+        FROM followups f
+        JOIN clients c ON f.client_id = c.id
+        WHERE f.scheduled_date >= $1 AND f.scheduled_date < $2
+        AND f.is_completed = false
+        ORDER BY f.scheduled_date ASC
+      `, [today, tomorrow]);
+      
+      return result.rows.map((row) => ({
+        id: row.id,
+        clientId: row.client_id,
+        action: row.action,
+        scheduledDate: row.scheduled_date,
+        isCompleted: row.is_completed,
+        reminder: row.reminder,
+        createdAt: row.created_at,
+        clientName: row.client_name
+      }));
+    } catch (error) {
+      log(`DB Error in getTodaysFollowups: ${error}`, "error");
+      return [];
+    }
+  }
+  
+  async getFollowup(id: number): Promise<Followup | undefined> {
+    try {
+      if (!pool) return undefined;
+      
+      const result = await pool.query(`
+        SELECT f.*, c.name as client_name
+        FROM followups f
+        JOIN clients c ON f.client_id = c.id
+        WHERE f.id = $1
+      `, [id]);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        action: row.action,
+        scheduledDate: row.scheduled_date,
+        isCompleted: row.is_completed,
+        reminder: row.reminder,
+        createdAt: row.created_at,
+        clientName: row.client_name
+      };
+    } catch (error) {
+      log(`DB Error in getFollowup: ${error}`, "error");
+      return undefined;
+    }
+  }
+  
+  async createFollowup(followup: InsertFollowup): Promise<Followup> {
+    try {
+      if (!pool) throw new Error("Database not available");
+      
+      const result = await pool.query(`
+        INSERT INTO followups (client_id, action, scheduled_date, is_completed, reminder)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+      `, [
+        followup.clientId,
+        followup.action,
+        followup.scheduledDate,
+        followup.isCompleted || false,
+        followup.reminder !== undefined ? followup.reminder : true
+      ]);
+      
+      // Get the client name
+      const clientResult = await pool.query(`
+        SELECT name FROM clients WHERE id = $1
+      `, [followup.clientId]);
+      
+      // Update the client's updated_at timestamp
+      await pool.query(`
+        UPDATE clients
+        SET updated_at = NOW()
+        WHERE id = $1
+      `, [followup.clientId]);
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        action: row.action,
+        scheduledDate: row.scheduled_date,
+        isCompleted: row.is_completed,
+        reminder: row.reminder,
+        createdAt: row.created_at,
+        clientName: clientResult.rows[0]?.name
+      };
+    } catch (error) {
+      log(`DB Error in createFollowup: ${error}`, "error");
+      throw error;
+    }
+  }
+  
+  async updateFollowup(id: number, updateData: Partial<Followup>): Promise<Followup | undefined> {
+    try {
+      if (!pool) return undefined;
+      
+      // Build the update query dynamically
+      const updates: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+      
+      if (updateData.action !== undefined) {
+        updates.push(`action = $${paramCount++}`);
+        values.push(updateData.action);
+      }
+      
+      if (updateData.scheduledDate !== undefined) {
+        updates.push(`scheduled_date = $${paramCount++}`);
+        values.push(updateData.scheduledDate);
+      }
+      
+      if (updateData.isCompleted !== undefined) {
+        updates.push(`is_completed = $${paramCount++}`);
+        values.push(updateData.isCompleted);
+      }
+      
+      if (updateData.reminder !== undefined) {
+        updates.push(`reminder = $${paramCount++}`);
+        values.push(updateData.reminder);
+      }
+      
+      // If there's nothing to update, return the existing followup
+      if (updates.length === 0) {
+        return this.getFollowup(id);
+      }
+      
+      // Add the followup id as the last parameter
+      values.push(id);
+      
+      const result = await pool.query(`
+        UPDATE followups
+        SET ${updates.join(', ')}
+        WHERE id = $${paramCount}
+        RETURNING *
+      `, values);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      // Update the client's updated_at timestamp
+      await pool.query(`
+        UPDATE clients
+        SET updated_at = NOW()
+        WHERE id = (SELECT client_id FROM followups WHERE id = $1)
+      `, [id]);
+      
+      // Get the client name
+      const clientResult = await pool.query(`
+        SELECT name FROM clients
+        WHERE id = (SELECT client_id FROM followups WHERE id = $1)
+      `, [id]);
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        action: row.action,
+        scheduledDate: row.scheduled_date,
+        isCompleted: row.is_completed,
+        reminder: row.reminder,
+        createdAt: row.created_at,
+        clientName: clientResult.rows[0]?.name
+      };
+    } catch (error) {
+      log(`DB Error in updateFollowup: ${error}`, "error");
+      return undefined;
+    }
+  }
+  
+  async completeFollowup(id: number): Promise<Followup | undefined> {
+    try {
+      if (!pool) return undefined;
+      
+      const result = await pool.query(`
+        UPDATE followups
+        SET is_completed = true
+        WHERE id = $1
+        RETURNING *
+      `, [id]);
+      
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      // Update the client's updated_at timestamp
+      await pool.query(`
+        UPDATE clients
+        SET updated_at = NOW()
+        WHERE id = (SELECT client_id FROM followups WHERE id = $1)
+      `, [id]);
+      
+      // Get the client name
+      const clientResult = await pool.query(`
+        SELECT name FROM clients
+        WHERE id = (SELECT client_id FROM followups WHERE id = $1)
+      `, [id]);
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        action: row.action,
+        scheduledDate: row.scheduled_date,
+        isCompleted: row.is_completed,
+        reminder: row.reminder,
+        createdAt: row.created_at,
+        clientName: clientResult.rows[0]?.name
+      };
+    } catch (error) {
+      log(`DB Error in completeFollowup: ${error}`, "error");
+      return undefined;
+    }
+  }
+  
+  async deleteFollowup(id: number): Promise<boolean> {
+    try {
+      if (!pool) return false;
+      
+      // First get the client_id for the followup
+      const followupResult = await pool.query(`
+        SELECT client_id FROM followups WHERE id = $1
+      `, [id]);
+      
+      if (followupResult.rows.length === 0) {
+        return false;
+      }
+      
+      const clientId = followupResult.rows[0].client_id;
+      
+      // Delete the followup
+      const result = await pool.query(`
+        DELETE FROM followups WHERE id = $1
+        RETURNING id
+      `, [id]);
+      
+      // Update the client's updated_at timestamp
+      if (result.rows.length > 0) {
+        await pool.query(`
+          UPDATE clients
+          SET updated_at = NOW()
+          WHERE id = $1
+        `, [clientId]);
+      }
+      
+      return result.rows.length > 0;
+    } catch (error) {
+      log(`DB Error in deleteFollowup: ${error}`, "error");
+      return false;
+    }
+  }
+}
 
 export class MemStorage implements IStorage {
   private clients: Map<number, Client>;
@@ -574,4 +1268,4 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Export either the database storage or memory storage based on connection status
-export const storage = db ? new DatabaseStorage() : new MemStorage();
+export const storage = pool ? new PostgresStorage() : new MemStorage();
