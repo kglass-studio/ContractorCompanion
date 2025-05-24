@@ -57,17 +57,21 @@ export default function AddClientForm() {
     try {
       setIsSubmitting(true);
       
+      console.log("Submitting client:", values);
+      
       // Create client
       const client = await createClient({
         name: values.name,
         phone: values.phone,
-        email: values.email,
-        addressLine1: values.addressLine1,
-        city: values.city,
-        state: values.state,
-        zipCode: values.zipCode,
+        email: values.email || null,
+        addressLine1: values.addressLine1 || null,
+        city: values.city || null,
+        state: values.state || null,
+        zipCode: values.zipCode || null,
         status: values.status,
       });
+      
+      console.log("Client created:", client);
       
       // Create initial note if provided
       if (values.initialNotes) {
@@ -99,6 +103,7 @@ export default function AddClientForm() {
       
       navigate(`/clients/${client.id}`);
     } catch (error) {
+      console.error("Error creating client:", error);
       toast({
         title: "Error",
         description: "Failed to create client. Please try again.",
