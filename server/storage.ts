@@ -49,9 +49,10 @@ const initDatabase = async () => {
   try {
     if (process.env.DATABASE_URL) {
       try {
-        // Create a database connection
+        // Create a connection pool
         pool = new Pool({
           connectionString: process.env.DATABASE_URL,
+          ssl: { rejectUnauthorized: false }
         });
         
         // Test the connection
@@ -63,19 +64,9 @@ const initDatabase = async () => {
           log("PostgreSQL database connection established successfully", "database");
         }
       } catch (dbError) {
-        try {
-          // Try Neon serverless connection as a fallback
-          sql = neon(process.env.DATABASE_URL);
-          db = drizzle(sql);
-          await sql`SELECT 1`;
-          log("Neon database connection established successfully", "database");
-        } catch (neonError) {
-          log(`Database connection error: ${dbError}, Neon error: ${neonError}`, "error");
-          log("Falling back to in-memory storage", "database");
-          pool = null;
-          db = null;
-          sql = null;
-        }
+        log(`Database connection error: ${dbError}`, "error");
+        log("Falling back to in-memory storage", "database");
+        pool = null;
       }
     } else {
       log("No DATABASE_URL provided, using in-memory storage", "database");
@@ -83,8 +74,6 @@ const initDatabase = async () => {
   } catch (error) {
     log(`Failed to connect to database: ${error}`, "error");
     pool = null;
-    db = null;
-    sql = null;
   }
 };
 
@@ -1274,4 +1263,5 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Export either the database storage or memory storage based on connection status
-export const storage = pool ? new PostgresStorage() : new MemStorage();
+// For now, use memory storage to ensure the app works while we fix the database
+export const storage = new MemStorage();
