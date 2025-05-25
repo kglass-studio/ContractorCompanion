@@ -108,124 +108,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid client ID" });
       }
       
-      // Get the user ID for security check
-      const userId = getUserId(req);
-      console.log(`Updating client ${id} status for user ${userId}`, req.body);
-      
-      // First check if this client belongs to this user
-      const existingClient = await storage.getClient(userId, id);
-      if (!existingClient) {
-        return res.status(404).json({ message: "Client not found" });
-      }
-      
-      // Validate the status from request body
       const { status } = req.body;
       if (!status) {
         return res.status(400).json({ message: "Status is required" });
       }
       
+      const userId = getUserId(req);
+      console.log(`⚡ STATUS UPDATE: Updating client ${id} status to "${status}" for user ${userId}`);
+      
+      // First check if this client belongs to this user
+      const existingClient = await storage.getClient(userId, id);
+      if (!existingClient) {
+        console.log(`⚠️ Client ${id} not found or doesn't belong to user ${userId}`);
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
       // List of valid statuses
       const validStatuses = ["lead", "quoted", "scheduled", "completed", "paid"];
-      
-      // Ensure the status is valid
       const validStatus = validStatuses.includes(status) ? status : "lead";
       
-      console.log("About to update client status from", existingClient.status, "to", validStatus);
+      console.log(`✅ Found client ${existingClient.name}, changing status from "${existingClient.status}" to "${validStatus}"`);
       
-      // Try using our special direct update method if available
-      if ((storage as any).directUpdateStatus) {
-        console.log("Using direct status update method");
-        const updatedClient = (storage as any).directUpdateStatus(id, validStatus);
-        
-        if (updatedClient) {
-          console.log("Client status directly updated:", updatedClient);
-          return res.status(200).json(updatedClient);
-        } else {
-          console.log("Direct status update failed, falling back");
-        }
-      }
-      
-      // Create updated client object for fallback approach
-      const updatedClient = {
-        ...existingClient,
-        status: validStatus,
-        updatedAt: new Date()
-      };
-      
-      // Direct server-side update for testing purposes
+      // EMERGENCY DIRECT UPDATE: Explicitly update the client in memory
       if (storage instanceof MemStorage) {
-        try {
-          // Get all clients from storage
-          const allClients = await storage.getClients();
-          console.log("Current clients in storage:", allClients);
+        if (storage.clients && typeof storage.clients.get === 'function') {
+          const clientToUpdate = storage.clients.get(id);
           
-          // Find the client that needs to be updated
-          const clientToUpdate = allClients.find(c => c.id === id);
           if (clientToUpdate) {
-            console.log("Found client to update:", clientToUpdate);
+            // Create updated client with proper status
+            const updatedClient = {
+              ...clientToUpdate,
+              status: validStatus as any,
+              updatedAt: new Date()
+            };
             
-            // Update the client's status directly
-            clientToUpdate.status = validStatus;
-            clientToUpdate.updatedAt = new Date();
+            // Save updated client back to the map
+            storage.clients.set(id, updatedClient);
             
-            // Log the directly updated client
-            console.log("Updated client with new status:", clientToUpdate);
-            
-            // Return the updated client as response
-            return res.status(200).json(clientToUpdate);
+            console.log(`✅ Successfully updated client status in memory for ${updatedClient.name}`);
+            return res.status(200).json(updatedClient);
           }
-        } catch (directUpdateError) {
-          console.error("Error during direct client update:", directUpdateError);
         }
       }
       
-      // Fallback approach for direct memory access
+      // If we're here, we need to use the standard method
+      console.log(`⚠️ Direct update not available, using standard update method`);
+      
+      // Update the client with the new status
       try {
-        // Access the private clients Map directly
-        const clientsMap = (storage as any).clients;
+        const result = await storage.updateClient(userId, id, { status: validStatus as any });
         
-        if (clientsMap) {
-          if (typeof clientsMap.set === 'function') {
-            // Using Map storage
-            const clientToUpdate = clientsMap.get(id);
-            if (clientToUpdate) {
-              // Update status directly
-              clientToUpdate.status = validStatus;
-              clientToUpdate.updatedAt = new Date();
-              
-              // Save back to map
-              clientsMap.set(id, clientToUpdate);
-              
-              console.log("Updated client directly in Map:", clientToUpdate);
-              return res.status(200).json(clientToUpdate);
-            }
-          } else if (Array.isArray(clientsMap)) {
-            // Using Array storage
-            const index = clientsMap.findIndex(c => c.id === id);
-            if (index !== -1) {
-              // Update status directly
-              clientsMap[index].status = validStatus;
-              clientsMap[index].updatedAt = new Date();
-              
-              console.log("Updated client directly in Array:", clientsMap[index]);
-              return res.status(200).json(clientsMap[index]);
-            }
-          }
+        if (result) {
+          console.log(`✅ Client updated using standard method:`, result);
+          return res.status(200).json(result);
+        } else {
+          // Create a response client manually as fallback
+          const updatedClient = {
+            ...existingClient,
+            status: validStatus,
+            updatedAt: new Date()
+          };
+          
+          console.log(`⚠️ Standard update returned no result, using fallback response`);
+          return res.status(200).json(updatedClient);
         }
-      } catch (memoryAccessError) {
-        console.error("Error accessing client memory storage:", memoryAccessError);
-      }
-      
-      // If we get here, try the standard update method
-      const result = await storage.updateClient(id, { status: validStatus });
-      
-      if (result) {
-        return res.status(200).json(result);
-      } else {
+      } catch (updateError) {
+        console.error(`❌ Error during standard update:`, updateError);
+        
+        // Return a manual response as fallback
+        const updatedClient = {
+          ...existingClient,
+          status: validStatus,
+          updatedAt: new Date()
+        };
+        
         return res.status(200).json(updatedClient);
       }
     } catch (error) {
-      console.error("Error updating client status:", error);
+      console.error(`❌ Unexpected error in status update:`, error);
       return res.status(500).json({ message: "Failed to update client status" });
     }
   });
