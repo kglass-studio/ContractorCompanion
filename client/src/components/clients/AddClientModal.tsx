@@ -108,7 +108,7 @@ export default function AddClientModal({ open, onOpenChange }: AddClientModalPro
     try {
       setIsSubmitting(true);
       
-      // Create client
+      // Create client - userId will be added by the server
       const client = await createClient({
         name: values.name,
         phone: values.phone,
