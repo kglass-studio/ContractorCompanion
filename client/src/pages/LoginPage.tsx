@@ -56,6 +56,9 @@ export default function LoginPage() {
       // In a real app, this would come from the server
       const userId = `user-${values.email.split('@')[0]}-${Date.now()}`;
       
+      // Store the email for profile display
+      localStorage.setItem('userEmail', values.email);
+      
       // Use the login function from our auth context
       // This will set the proper user ID and handle localStorage
       login(userId);

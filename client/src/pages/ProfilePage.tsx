@@ -10,18 +10,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function ProfilePage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { userId, logout } = useAuthContext();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userInfo, setUserInfo] = useState({
     name: "",
     email: ""
   });
+  
+  // Get authentication info from localStorage directly
+  // This is a fallback for when the auth context isn't available
+  const [userId, setUserId] = useState<string>('');
+  
+  // Create a local logout function
+  const logout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
+  };
 
-  // Extract user info from userId
+  // Extract user info directly from localStorage
   useEffect(() => {
-    if (userId) {
+    // Get user ID from localStorage
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(storedUserId);
+      
       // Parse the user info from the userId (since we're storing it in the format user-{name}-{timestamp})
-      const parts = userId.split('-');
+      const parts = storedUserId.split('-');
       if (parts.length >= 2) {
         // Extract email from login process (or use a placeholder if not available)
         let extractedEmail = localStorage.getItem('userEmail') || 'user@example.com';
@@ -36,8 +50,11 @@ export default function ProfilePage() {
           email: extractedEmail
         });
       }
+    } else {
+      // Redirect to login if no user ID found
+      navigate('/login');
     }
-  }, [userId]);
+  }, [navigate]);
 
   const handleLogout = () => {
     setIsLoggingOut(true);
