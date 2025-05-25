@@ -1,11 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { useFollowups } from "@/hooks/useFollowups";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DayClickEventHandler } from "react-day-picker";
 
 export default function CalendarPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { data: followups } = useFollowups();
+  const [followupDates, setFollowupDates] = useState<Date[]>([]);
+  
+  // Process followups to identify dates with scheduled activities
+  useEffect(() => {
+    if (followups && followups.length > 0) {
+      const dates = followups.map(followup => new Date(followup.scheduledDate));
+      setFollowupDates(dates);
+    } else {
+      setFollowupDates([]);
+    }
+  }, [followups]);
   
   // Get followups for the selected date if we have a date selected
   const selectedDateFollowups = followups?.filter(followup => {
@@ -18,6 +30,15 @@ export default function CalendarPage() {
       followupDate.getFullYear() === date.getFullYear()
     );
   });
+  
+  // Function to check if a date has follow-ups
+  const isFollowupDate = (day: Date): boolean => {
+    return followupDates.some(followupDate => 
+      followupDate.getDate() === day.getDate() &&
+      followupDate.getMonth() === day.getMonth() &&
+      followupDate.getFullYear() === day.getFullYear()
+    );
+  };
 
   return (
     <div className="min-h-screen pb-16">
@@ -35,6 +56,17 @@ export default function CalendarPage() {
             selected={date}
             onSelect={setDate}
             className="rounded-md border"
+            modifiers={{
+              highlighted: (day) => isFollowupDate(day)
+            }}
+            modifiersStyles={{
+              highlighted: {
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+                fontWeight: "bold",
+                border: "1px solid rgba(59, 130, 246, 0.5)",
+                borderRadius: "0.25rem"
+              }
+            }}
           />
         </div>
 
