@@ -130,7 +130,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Ensure the status is valid
       const validStatus = validStatuses.includes(status) ? status : "lead";
       
-      // Create updated client object
+      console.log("About to update client status from", existingClient.status, "to", validStatus);
+      
+      // Try using our special direct update method if available
+      if ((storage as any).directUpdateStatus) {
+        console.log("Using direct status update method");
+        const updatedClient = (storage as any).directUpdateStatus(id, validStatus);
+        
+        if (updatedClient) {
+          console.log("Client status directly updated:", updatedClient);
+          return res.status(200).json(updatedClient);
+        } else {
+          console.log("Direct status update failed, falling back");
+        }
+      }
+      
+      // Create updated client object for fallback approach
       const updatedClient = {
         ...existingClient,
         status: validStatus,

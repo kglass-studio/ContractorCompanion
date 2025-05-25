@@ -1350,4 +1350,87 @@ initDatabase().catch((error) => {
 });
 
 // Export the storage implementation
-export const storage = new MemStorage();
+// Debug helper function to log current storage state
+function logCurrentStorageState(storage: any) {
+  console.log("----- STORAGE STATE DEBUG -----");
+  if (storage instanceof MemStorage) {
+    console.log("Using MemStorage");
+    if (storage.clients instanceof Map) {
+      console.log("Clients using Map storage with size:", storage.clients.size);
+      console.log("Client entries:", Array.from(storage.clients.entries()));
+    } else if (Array.isArray(storage.clients)) {
+      console.log("Clients using Array storage with length:", storage.clients.length);
+      console.log("Client entries:", storage.clients);
+    } else {
+      console.log("Unknown clients storage type:", typeof storage.clients);
+    }
+  } else {
+    console.log("Not using MemStorage:", storage.constructor.name);
+  }
+  console.log("----- END STORAGE STATE DEBUG -----");
+}
+
+// Create a singleton instance
+const memStorage = new MemStorage();
+
+// Override the updateClient method for special debugging
+const originalUpdateClient = memStorage.updateClient;
+memStorage.updateClient = async function(id: number, updateData: Partial<Client>): Promise<Client | undefined> {
+  console.log("CUSTOM UPDATE CLIENT CALLED with ID:", id, "and data:", updateData);
+  
+  // Log before state
+  console.log("Before update, client map:", this.clients);
+  
+  // Get the current client
+  const client = this.clients.get(id);
+  if (!client) {
+    console.log("Client not found with ID:", id);
+    return undefined;
+  }
+  
+  console.log("Found client to update:", client);
+  
+  // Create a properly updated client with all fields preserved
+  const updatedClient: Client = {
+    ...client,
+    ...updateData,
+    updatedAt: new Date(),
+  };
+  
+  console.log("Updated client object:", updatedClient);
+  
+  // Save the updated client to the Map
+  this.clients.set(id, updatedClient);
+  
+  // Log after state
+  console.log("After update, client map:", this.clients);
+  console.log("Direct client check after update:", this.clients.get(id));
+  
+  // Return the full updated client object
+  return updatedClient;
+};
+
+// Create a utility method to directly update status
+memStorage.directUpdateStatus = function(id: number, newStatus: string): Client | undefined {
+  console.log("DIRECT STATUS UPDATE CALLED with ID:", id, "and status:", newStatus);
+  
+  // Get the client
+  const client = this.clients.get(id);
+  if (!client) {
+    console.log("Client not found for direct status update");
+    return undefined;
+  }
+  
+  // Update the status and save
+  client.status = newStatus;
+  client.updatedAt = new Date();
+  this.clients.set(id, client);
+  
+  console.log("Client after direct status update:", client);
+  return client;
+};
+
+// Log the initial state
+logCurrentStorageState(memStorage);
+
+export const storage = memStorage;
