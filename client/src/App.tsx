@@ -17,6 +17,7 @@ import LoginPage from "@/pages/LoginPage";
 import PaymentPage from "@/pages/PaymentPage";
 import CalendarPage from "@/pages/CalendarPage";
 import ProfilePage from "@/pages/ProfilePage";
+import SubscriptionPage from "@/pages/SubscriptionPage";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { useState, useEffect, createContext, useContext } from "react";
 import { OnlineStatusProvider } from "@/hooks/useOnlineStatus";
@@ -137,6 +138,7 @@ function Router() {
           <Route path="/clients/:id" component={ClientDetailPage} />
           <Route path="/calendar" component={CalendarPage} />
           <Route path="/profile" component={ProfilePage} />
+          <Route path="/subscription" component={SubscriptionPage} />
         </>
       ) : (
         // Redirect to landing page if not authenticated and trying to access protected routes

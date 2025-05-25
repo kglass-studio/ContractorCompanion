@@ -141,19 +141,17 @@ export default function ProfilePage() {
                     Subscription Plan
                   </p>
                   <div className="flex items-center">
-                    <Badge className={userPlan === 'unlimited' ? 'bg-emerald-500' : 'bg-blue-500'}>
-                      {userPlan === 'unlimited' ? 'Unlimited' : 'Free'}
+                    <Badge className={userPlan === 'unlimited' || userPlan === 'paid' ? 'bg-amber-500' : 'bg-blue-500'}>
+                      {userPlan === 'unlimited' || userPlan === 'paid' ? 'UNLIMITED' : 'FREE'}
                     </Badge>
-                    {userPlan === 'free' && (
-                      <Button 
-                        variant="link" 
-                        size="sm"
-                        className="text-primary ml-2 p-0 h-auto"
-                        onClick={() => navigate('/payment')}
-                      >
-                        Upgrade
-                      </Button>
-                    )}
+                    <Button 
+                      variant="link" 
+                      size="sm"
+                      className="text-primary ml-2 p-0 h-auto"
+                      onClick={() => navigate('/subscription')}
+                    >
+                      {userPlan === 'free' ? 'Upgrade' : 'Manage'}
+                    </Button>
                   </div>
                 </div>
                 <div>
