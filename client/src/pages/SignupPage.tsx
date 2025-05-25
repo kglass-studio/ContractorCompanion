@@ -72,6 +72,9 @@ export default function SignupPage() {
       // For now, we'll simulate the API call with a timeout
       await new Promise(resolve => setTimeout(resolve, 1500));
 
+      // Set user as logged in
+      localStorage.setItem('isLoggedIn', 'true');
+      
       // Show success message
       toast({
         title: "Account created",

@@ -13,6 +13,7 @@ import AddFollowupPage from "@/pages/AddFollowupPage";
 import LandingPage from "@/pages/LandingPage";
 import PricingPage from "@/pages/PricingPage";
 import SignupPage from "@/pages/SignupPage";
+import LoginPage from "@/pages/LoginPage";
 import PaymentPage from "@/pages/PaymentPage";
 import CalendarPage from "@/pages/CalendarPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/" component={isAuthenticated ? DashboardPage : LandingPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/signup" component={SignupPage} />
+      <Route path="/login" component={LoginPage} />
       <Route path="/payment" component={PaymentPage} />
       
       {/* Protected routes - only for authenticated users */}
