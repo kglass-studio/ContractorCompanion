@@ -20,8 +20,9 @@ export async function getClient(id: number): Promise<Client> {
   return res.json();
 }
 
-export async function createClient(client: InsertClient): Promise<Client> {
+export async function createClient(client: Omit<InsertClient, 'userId'>): Promise<Client> {
   console.log("API createClient called with:", client);
+  // The userId will be added by the server from the session
   const res = await apiRequest("POST", "/api/clients", client);
   const data = await res.json();
   console.log("API createClient response:", data);
