@@ -98,6 +98,17 @@ export default function LandingPage() {
               >
                 View Pricing
               </Button>
+              <Button 
+                size="lg" 
+                variant="secondary" 
+                className="text-lg px-8 py-6 bg-blue-600 text-white hover:bg-blue-700 mt-4 sm:mt-0"
+                onClick={() => {
+                  localStorage.setItem('isLoggedIn', 'true');
+                  window.location.href = '/clients';
+                }}
+              >
+                Demo Login (No Password)
+              </Button>
             </div>
           </div>
         </div>
