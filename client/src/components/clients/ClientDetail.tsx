@@ -58,9 +58,13 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
       console.log("Updating client status to:", newStatus);
       setUpdatingStatus(true);
       
-      // Make the API call to update the client status
-      const updatedClient = await updateClient(client.id, { status: newStatus });
-      console.log("Client status update response:", updatedClient);
+      // Use one of the valid JobStatus values to ensure type safety
+      const validStatus = Object.values(JobStatus).includes(newStatus as any) 
+        ? newStatus 
+        : JobStatus.LEAD;
+      
+      // Make the API call to update the client status with a valid status
+      await updateClient(client.id, { status: validStatus });
       
       // Force refresh client data
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}`] });

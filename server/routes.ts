@@ -121,38 +121,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientData = insertClientSchema.partial().parse(req.body);
       console.log("Validated client update data:", clientData);
       
-      // Fix the client update issue with a direct implementation
+      // Get the existing client first to ensure ownership
+      const existingClient = await storage.getClient(userId, id);
+      if (!existingClient) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // Create a simplified direct update using the current in-memory storage
+      // This is a temporary solution until the storage implementation is properly aligned
       try {
-        // Since we know we're using MemStorage, directly update the client
-        // First get the client
-        const existingClient = await storage.getClient(userId, id);
-        
-        if (existingClient) {
-          // Update client with new data
+        // Update the client directly in memory to avoid issues with the interface mismatch
+        if (storage instanceof MemStorage) {
+          // Create the updated client object
           const updatedClient = {
             ...existingClient,
             ...clientData,
             updatedAt: new Date()
           };
           
-          // Save updated client in storage
-          if (storage instanceof MemStorage) {
-            storage.clients.set(id, updatedClient);
-            console.log("Client updated directly:", updatedClient);
-            
-            // Return the updated client data
-            res.json(updatedClient);
-          } else {
-            // Use the fallback approach
-            await storage.updateClient(userId, id, clientData);
-            res.json(updatedClient);
-          }
+          // Update the client in the MemStorage directly
+          await storage.updateClient(id, clientData);
+          
+          // Return the updated client
+          return res.json(updatedClient);
         } else {
-          res.status(404).json({ message: "Client not found" });
+          // For any other storage implementation, try the normal approach
+          const client = await storage.updateClient(userId, id, clientData);
+          return res.json(client);
         }
       } catch (err) {
-        console.error("Error in direct client update:", err);
-        res.status(500).json({ message: "Failed to update client" });
+        console.error("Error updating client:", err);
+        return res.status(500).json({ message: "Failed to update client" });
       }
     } catch (error) {
       console.error("Error updating client:", error);
