@@ -108,16 +108,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid client ID" });
       }
       
-      const { status } = req.body;
+      const { status, userId: clientUserId } = req.body;
       if (!status) {
         return res.status(400).json({ message: "Status is required" });
       }
       
-      const userId = getUserId(req);
+      // Use the userId from the request body if provided (from localStorage)
+      // or fall back to the one from the session
+      const userId = clientUserId || getUserId(req);
       console.log(`⚡ STATUS UPDATE: Updating client ${id} status to "${status}" for user ${userId}`);
       
       // First check if this client belongs to this user
-      const existingClient = await storage.getClient(userId, id);
+      // Get all clients for this user and find the matching one
+      const clients = await storage.getClients(userId);
+      const existingClient = clients.find(client => client.id === id);
+      
       if (!existingClient) {
         console.log(`⚠️ Client ${id} not found or doesn't belong to user ${userId}`);
         return res.status(404).json({ message: "Client not found" });

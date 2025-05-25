@@ -126,7 +126,13 @@ export async function deleteFollowup(id: number): Promise<void> {
 export async function updateClientStatus(id: number, status: string): Promise<Client> {
   console.log(`Updating client ${id} status to:`, status);
   try {
-    const res = await apiRequest("POST", `/api/clients/${id}/update-status`, { status });
+    // Get the current user ID from localStorage to ensure proper validation
+    const userId = localStorage.getItem('userId');
+    
+    const res = await apiRequest("POST", `/api/clients/${id}/update-status`, { 
+      status,
+      userId // Include userId in the request for proper authentication
+    });
     const updatedClient = await res.json();
     console.log("Status update response:", updatedClient);
     return updatedClient;
