@@ -185,7 +185,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/notes", async (req: Request, res: Response) => {
     try {
+      // Get user ID for security check
+      const userId = getUserId(req);
+      
+      // Parse note data
       const noteData = insertNoteSchema.parse(req.body);
+      
+      // Verify the client belongs to this user
+      const client = await storage.getClient(userId, noteData.clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // Client belongs to user, proceed with creating note
       const note = await storage.createNote(noteData);
       res.status(201).json(note);
     } catch (error) {
@@ -203,7 +215,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid note ID" });
       }
-
+      
+      // Get user ID for security check
+      const userId = getUserId(req);
+      
+      // Get the note first
+      const note = await storage.getNote(id);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+      
+      // Check if note belongs to a client owned by this user
+      const client = await storage.getClient(userId, note.clientId);
+      if (!client) {
+        return res.status(403).json({ message: "Not authorized to delete this note" });
+      }
+      
+      // User owns the client, proceed with deletion
       const success = await storage.deleteNote(id);
       if (!success) {
         return res.status(404).json({ message: "Note not found" });
@@ -215,18 +243,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Followups endpoints
+  // Followups endpoints with user isolation
   apiRouter.get("/followups", async (req: Request, res: Response) => {
     try {
+      // Get user ID for security
+      const userId = getUserId(req);
+      
       const today = req.query.today === "true";
       
-      if (today) {
-        const followups = await storage.getTodaysFollowups();
-        res.json(followups);
-      } else {
-        const followups = await storage.getFollowups();
-        res.json(followups);
+      // Get all clients for this user
+      const clientsForUser = await storage.getClients(userId);
+      const clientIds = clientsForUser.map(client => client.id);
+      
+      // If user has no clients, return empty array
+      if (clientIds.length === 0) {
+        return res.json([]);
       }
+      
+      // Get followups filtered by user's clients
+      const allFollowups = today
+        ? await storage.getTodaysFollowups()
+        : await storage.getFollowups();
+        
+      // Filter to only include followups for this user's clients
+      const userFollowups = allFollowups.filter(followup => 
+        clientIds.includes(followup.clientId)
+      );
+      
+      res.json(userFollowups);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch followups" });
     }
@@ -238,7 +282,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(clientId)) {
         return res.status(400).json({ message: "Invalid client ID" });
       }
-
+      
+      // Get user ID for security check
+      const userId = getUserId(req);
+      
+      // Verify the client belongs to this user
+      const client = await storage.getClient(userId, clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // Client belongs to user, proceed with fetching followups
       const followups = await storage.getFollowupsByClient(clientId);
       res.json(followups);
     } catch (error) {
