@@ -9,6 +9,7 @@ import ClientsPage from "@/pages/ClientsPage";
 import ClientDetailPage from "@/pages/ClientDetailPage";
 import AddClientPage from "@/pages/AddClientPage";
 import AddNotePage from "@/pages/AddNotePage";
+import AddFollowupPage from "@/pages/AddFollowupPage";
 import LandingPage from "@/pages/LandingPage";
 import PricingPage from "@/pages/PricingPage";
 import SignupPage from "@/pages/SignupPage";
@@ -68,6 +69,7 @@ function Router() {
           <Route path="/clients" component={ClientsPage} />
           <Route path="/clients/add" component={AddClientPage} />
           <Route path="/clients/:id/notes/add" component={AddNotePage} />
+          <Route path="/clients/:id/followup/add" component={AddFollowupPage} />
           <Route path="/clients/:id" component={ClientDetailPage} />
           <Route path="/calendar" component={CalendarPage} />
         </>
