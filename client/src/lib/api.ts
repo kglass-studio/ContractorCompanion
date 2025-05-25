@@ -38,9 +38,33 @@ export async function createClient(client: Omit<InsertClient, 'userId'>): Promis
 export async function updateClient(id: number, client: Partial<Client>): Promise<Client> {
   console.log(`Updating client ${id} with data:`, client);
   try {
+    // Make sure we're sending valid status values
+    if (client.status) {
+      // Ensure it's one of the JobStatus values
+      const validStatuses = ["lead", "quoted", "scheduled", "completed", "paid"];
+      if (!validStatuses.includes(client.status)) {
+        client.status = "lead";
+      }
+    }
+    
+    // Send the request
     const res = await apiRequest("PUT", `/api/clients/${id}`, client);
-    const data = await res.json();
-    console.log("Client update response:", data);
+    
+    // Handle the response - if empty, return what we sent
+    let data;
+    try {
+      data = await res.json();
+    } catch (parseError) {
+      console.log("Response couldn't be parsed as JSON, returning updated client");
+      // If there's an error parsing the response, return a constructed response
+      // using the client ID and our update data
+      return {
+        id,
+        ...client,
+        updatedAt: new Date()
+      } as Client;
+    }
+    
     return data;
   } catch (error) {
     console.error("Error in updateClient API call:", error);

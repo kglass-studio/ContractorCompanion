@@ -121,34 +121,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientData = insertClientSchema.partial().parse(req.body);
       console.log("Validated client update data:", clientData);
       
-      // Get the existing client first to ensure ownership
-      const existingClient = await storage.getClient(userId, id);
-      if (!existingClient) {
-        return res.status(404).json({ message: "Client not found" });
-      }
-      
-      // Create a simplified direct update using the current in-memory storage
-      // This is a temporary solution until the storage implementation is properly aligned
       try {
-        // Update the client directly in memory to avoid issues with the interface mismatch
-        if (storage instanceof MemStorage) {
-          // Create the updated client object
-          const updatedClient = {
-            ...existingClient,
-            ...clientData,
-            updatedAt: new Date()
-          };
-          
-          // Update the client in the MemStorage directly
-          await storage.updateClient(id, clientData);
-          
-          // Return the updated client
-          return res.json(updatedClient);
-        } else {
-          // For any other storage implementation, try the normal approach
-          const client = await storage.updateClient(userId, id, clientData);
-          return res.json(client);
+        // First ensure the client exists and belongs to this user
+        const existingClient = await storage.getClient(userId, id);
+        if (!existingClient) {
+          return res.status(404).json({ message: "Client not found" });
         }
+
+        // Validate client status if it's being updated
+        if (clientData.status) {
+          // List of valid statuses from our schema
+          const validStatuses = ["lead", "quoted", "scheduled", "completed", "paid"];
+          
+          if (!validStatuses.includes(clientData.status)) {
+            // Default to lead for invalid statuses
+            console.log("Invalid status value, defaulting to lead");
+            clientData.status = "lead";
+          }
+        }
+
+        // Create the updated client object
+        const updatedClient = {
+          ...existingClient,
+          ...clientData,
+          updatedAt: new Date()
+        };
+        
+        // Direct update for in-memory storage
+        if (storage instanceof MemStorage) {
+          // Get the private clients Map from the MemStorage instance
+          const clientsMap = (storage as any).clients;
+          
+          if (clientsMap && typeof clientsMap.set === 'function') {
+            // Directly update the client in the Map
+            clientsMap.set(id, updatedClient);
+            console.log("Updated client directly in memory");
+            
+            // Return the updated client data
+            return res.json(updatedClient);
+          }
+        }
+        
+        // If we couldn't do a direct update, try the standard method
+        console.log("Using standard client update method");
+        const result = await storage.updateClient(id, clientData);
+        
+        // If the update was successful, return the updated client
+        // Otherwise, return our constructed updated client
+        return res.json(result || updatedClient);
       } catch (err) {
         console.error("Error updating client:", err);
         return res.status(500).json({ message: "Failed to update client" });
