@@ -56,12 +56,14 @@ export default function AddClientForm() {
 
   const onSubmit = async (values: any) => {
     try {
+      console.log("Starting client submission process");
       setIsSubmitting(true);
       
-      console.log("Submitting client:", values);
+      console.log("Submitting client with values:", values);
       
       // Validate required fields
       if (!values.name || !values.phone) {
+        console.log("Validation failed: missing required fields");
         toast({
           title: "Missing information",
           description: "Name and phone number are required",
@@ -88,26 +90,33 @@ export default function AddClientForm() {
       // Create initial note if provided or if there's a photo
       if (values.initialNotes || selectedFile) {
         try {
-          // Create a FormData object for the file upload
-          const formData = new FormData();
-          
-          // Add the note text
-          const noteText = values.initialNotes || `Initial photo for ${client.name}`;
-          formData.append('text', noteText);
-          formData.append('clientId', client.id.toString());
-          
-          // Add the file if available
           if (selectedFile) {
+            // Create a FormData object for the file upload
+            const formData = new FormData();
+            
+            // Add the note text
+            const noteText = values.initialNotes || `Initial photo for ${client.name}`;
+            formData.append('text', noteText);
+            formData.append('clientId', client.id.toString());
+            
+            // Add the file
             formData.append('photo', selectedFile);
+            
+            // Create the note with the photo
+            await fetch('/api/notes', {
+              method: 'POST',
+              body: formData,
+            });
+            
+            console.log("Note created with photo");
+          } else {
+            // If no photo, use the regular API
+            await createNote({
+              clientId: client.id,
+              text: values.initialNotes || '',
+            });
+            console.log("Regular note created");
           }
-          
-          // Create the note with the photo
-          await fetch('/api/notes', {
-            method: 'POST',
-            body: formData,
-          });
-          
-          console.log("Note created with photo");
         } catch (error) {
           console.error("Error creating initial note:", error);
           toast({
@@ -164,6 +173,7 @@ export default function AddClientForm() {
           </div>
           <Button 
             type="submit" 
+            form="client-creation-form"
             variant="outline" 
             size="sm" 
             className="bg-white text-primary font-medium hover:bg-gray-100"
@@ -176,12 +186,7 @@ export default function AddClientForm() {
 
       <div className="p-4">
         <Form {...form}>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            console.log("Form submitted directly");
-            const formValues = form.getValues();
-            onSubmit(formValues);
-          }} className="space-y-4">
+          <form id="client-creation-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Basic Info Section */}
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="font-semibold mb-3">Client Information</h2>
