@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Loader2Icon, CheckIcon, CreditCardIcon, ArrowLeftIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import PayPalButton from "../components/PayPalButton";
+import PaymentButton from "../components/PaymentButton";
 
 export default function PaymentPage() {
   const [, navigate] = useLocation();
@@ -181,10 +181,10 @@ export default function PaymentPage() {
                       
                       <div className="flex justify-center mt-4">
                         <div className="w-full max-w-xs">
-                          <PayPalButton
+                          <PaymentButton
                             amount="15.00"
-                            currency="USD"
-                            intent="CAPTURE"
+                            onSuccess={handlePaymentSuccess}
+                            onError={handlePaymentError}
                           />
                         </div>
                       </div>
