@@ -68,7 +68,11 @@ export default function Dashboard() {
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  localStorage.removeItem('isLoggedIn');
+                  navigate("/");
+                  window.location.reload(); // Force a refresh to clear any cached state
+                }}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
