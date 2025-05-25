@@ -6,7 +6,8 @@ import { useClientById } from "@/hooks/useClients";
 import { useFollowupsByClient } from "@/hooks/useFollowups";
 import { useNotesByClient } from "@/hooks/useNotes";
 import { getStatusClass } from "@/lib/statusUtils";
-import { updateClient, updateClientStatus } from "@/lib/api";
+import { updateClient } from "@/lib/api";
+import { useMutation } from "@tanstack/react-query";
 import { ArrowLeftIcon, EditIcon, PlusIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -53,8 +54,7 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
     return null;
   }
 
-  // Use our new dedicated status update hook
-  const updateClientStatus = useUpdateClientStatus();
+
   
   const handleUpdateStatus = async (newStatus: string) => {
     if (newStatus === client.status) return;
@@ -64,22 +64,35 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
     try {
       console.log("Updating client status to:", newStatus);
       
-      // Call our new mutation function
-      await updateClientStatus.mutateAsync({ 
-        id: client.id, 
-        status: newStatus 
+      // Make a direct fetch call
+      const response = await fetch(`/api/clients/${client.id}/update-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
       });
       
-      // The success handling, toasts, and cache updates are all 
-      // handled in the hook's onSuccess callback
+      if (!response.ok) {
+        throw new Error(`Failed to update status: ${response.statusText}`);
+      }
       
-      // Force a page refresh to ensure we're seeing the latest data
-      setTimeout(() => {
-        window.location.href = `/clients/${client.id}`;
-      }, 500);
+      // Update UI optimistically
+      toast({
+        title: "Status updated",
+        description: `Client status has been updated to ${newStatus}`,
+      });
+      
+      // Force refresh data by reloading the page
+      window.location.href = `/clients/${client.id}`;
+      
     } catch (error) {
-      console.error("Error in handleUpdateStatus:", error);
-      // Error handling is done in the hook's onError callback
+      console.error("Error updating client status:", error);
+      toast({
+        title: "Error updating status",
+        description: "Please try again or check your connection.",
+        variant: "destructive"
+      });
     } finally {
       setUpdatingStatus(false);
     }
