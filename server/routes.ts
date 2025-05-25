@@ -8,6 +8,14 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import {
+  initializeNotificationSystem,
+  getAllNotifications,
+  getUnreadNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  createFollowupCompletionNotification
+} from "./notifications";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { uploadRouter, serveUploads } from "./uploads";
 
@@ -237,6 +245,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!followup) {
         return res.status(404).json({ message: "Followup not found" });
       }
+      
+      // Create a notification when a follow-up is completed
+      const client = await storage.getClient(followup.clientId);
+      if (client) {
+        createFollowupCompletionNotification(followup, client.name);
+      }
 
       res.json(followup);
     } catch (error) {
@@ -280,6 +294,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard counts" });
+    }
+  });
+
+  // Notification endpoints
+  apiRouter.get("/notifications", async (_req: Request, res: Response) => {
+    try {
+      const notifications = getAllNotifications();
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  apiRouter.get("/notifications/unread", async (_req: Request, res: Response) => {
+    try {
+      const notifications = getUnreadNotifications();
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch unread notifications" });
+    }
+  });
+
+  apiRouter.put("/notifications/:id/read", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const success = markNotificationAsRead(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  apiRouter.put("/notifications/read-all", async (_req: Request, res: Response) => {
+    try {
+      markAllNotificationsAsRead();
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
     }
   });
 
