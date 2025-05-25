@@ -81,11 +81,11 @@ export default function SignupPage() {
         description: "Your account has been created successfully!",
       });
 
-      // Navigate to the appropriate page based on the selected plan
+      // Navigate to the appropriate page based on the selected plan with page reload to update auth state
       if (selectedPlan === "unlimited") {
-        navigate("/payment");
+        window.location.href = "/payment";
       } else {
-        navigate("/dashboard");
+        window.location.href = "/dashboard";
       }
     } catch (error) {
       toast({

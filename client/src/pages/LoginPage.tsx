@@ -59,8 +59,8 @@ export default function LoginPage() {
         description: "You have been logged in successfully.",
       });
 
-      // Navigate to dashboard
-      navigate("/dashboard");
+      // Navigate to dashboard and force a page reload to update auth state
+      window.location.href = '/dashboard';
     } catch (error) {
       toast({
         title: "Error",
