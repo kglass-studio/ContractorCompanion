@@ -6,7 +6,7 @@ import { useClientById } from "@/hooks/useClients";
 import { useFollowupsByClient } from "@/hooks/useFollowups";
 import { useNotesByClient } from "@/hooks/useNotes";
 import { getStatusClass } from "@/lib/statusUtils";
-import { updateClient } from "@/lib/api";
+import { updateClient, updateClientStatus } from "@/lib/api";
 import { ArrowLeftIcon, EditIcon, PlusIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -58,23 +58,11 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
       console.log("Updating client status to:", newStatus);
       setUpdatingStatus(true);
       
-      // Create a new endpoint specifically for status updates
-      const response = await fetch(`/api/clients/${client.id}/update-status`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      // Use our specialized status update function
+      const updatedClient = await updateClientStatus(client.id, newStatus);
+      console.log("Client status updated response:", updatedClient);
       
-      if (!response.ok) {
-        throw new Error(`Failed to update status: ${response.statusText}`);
-      }
-      
-      // Get the updated client data from the response
-      const updatedClient = await response.json();
-      
-      // Create a locally updated client even if the server response isn't complete
+      // Update the local client data
       const localUpdatedClient = {
         ...client,
         status: newStatus,
@@ -86,14 +74,14 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
       await queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/dashboard/counts"] });
       
-      // Force reload the client data
-      await refetch();
-      
       // Show success message
       toast({
         title: "Status updated",
         description: `Client status has been updated to ${newStatus}`,
       });
+      
+      // Window reload as a last resort to ensure data refresh
+      window.location.reload();
     } catch (error) {
       console.error("Error updating client status:", error);
       

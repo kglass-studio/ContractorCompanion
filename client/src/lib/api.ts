@@ -122,6 +122,20 @@ export async function deleteFollowup(id: number): Promise<void> {
   await apiRequest("DELETE", `/api/followups/${id}`);
 }
 
+// Special function for status updates to use the dedicated endpoint
+export async function updateClientStatus(id: number, status: string): Promise<Client> {
+  console.log(`Updating client ${id} status to:`, status);
+  try {
+    const res = await apiRequest("POST", `/api/clients/${id}/update-status`, { status });
+    const updatedClient = await res.json();
+    console.log("Status update response:", updatedClient);
+    return updatedClient;
+  } catch (error) {
+    console.error("Error updating client status:", error);
+    throw error;
+  }
+}
+
 // Dashboard API
 export async function getDashboardCounts(): Promise<Record<string, number>> {
   const res = await apiRequest("GET", "/api/dashboard/counts");
