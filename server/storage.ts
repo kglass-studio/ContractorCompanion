@@ -1492,4 +1492,30 @@ memStorage.directUpdateStatus = function(id: number, newStatus: string): Client 
 // Log the initial state
 logCurrentStorageState(memStorage);
 
+// Create special method for direct status updates
+memStorage.updateClientStatus = async function(id: number, status: string): Promise<Client | undefined> {
+  console.log("DIRECT STATUS UPDATE: Updating client", id, "to status", status);
+  
+  // Get the client to update
+  const client = this.clients.get(id);
+  if (!client) {
+    console.log("Client not found for status update");
+    return undefined;
+  }
+  
+  // Update the client status
+  const updatedClient = {
+    ...client,
+    status: status,
+    updatedAt: new Date()
+  };
+  
+  // Save the updated client
+  this.clients.set(id, updatedClient);
+  
+  console.log("Client status updated successfully:", updatedClient);
+  
+  return updatedClient;
+};
+
 export const storage = memStorage;
