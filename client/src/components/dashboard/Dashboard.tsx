@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import FollowupCard from "./FollowupCard";
 import StatusSummary from "./StatusSummary";
@@ -7,8 +7,18 @@ import { useFollowups } from "@/hooks/useFollowups";
 import { useClients } from "@/hooks/useClients";
 import { useDashboardCounts } from "@/hooks/useClients";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, User, Settings, LogOut, Search } from "lucide-react";
+import { 
+  PlusIcon, 
+  User, 
+  Settings, 
+  LogOut, 
+  Search, 
+  CreditCard, 
+  Crown,
+  AlertCircle
+} from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +27,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
@@ -24,6 +40,33 @@ export default function Dashboard() {
   const { data: clients, isLoading: isLoadingClients } = useClients({ limit: 3 });
   const { data: counts, isLoading: isLoadingCounts } = useDashboardCounts();
   const [showSearch, setShowSearch] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<'free'|'paid'>('free');
+  const [clientCount, setClientCount] = useState(0);
+  const { toast } = useToast();
+
+  // Load subscription status from localStorage
+  useEffect(() => {
+    const userPlan = localStorage.getItem('userPlan');
+    if (userPlan === 'paid') {
+      setSubscriptionPlan('paid');
+    }
+    
+    // Update client count for plan restriction notifications
+    if (clients && clients.length) {
+      setClientCount(clients.length);
+    }
+  }, [clients]);
+
+  // Show warnings if approaching free plan limits
+  useEffect(() => {
+    if (subscriptionPlan === 'free' && clientCount >= 4) {
+      toast({
+        title: "Approaching Client Limit",
+        description: "You're approaching the 5-client limit on the free plan. Upgrade to unlimited for more clients!",
+        variant: "destructive",
+      });
+    }
+  }, [clientCount, subscriptionPlan, toast]);
 
   const handleSearchClick = () => {
     setShowSearch(!showSearch);
@@ -36,8 +79,60 @@ export default function Dashboard() {
       {/* Header */}
       <header className="bg-primary text-white p-4 shadow-md">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold">JobTrack</h1>
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold">JobTrack</h1>
+            
+            {/* Subscription badge */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium flex items-center ${
+                    subscriptionPlan === 'paid' 
+                      ? 'bg-amber-400 text-amber-900' 
+                      : 'bg-gray-200 text-gray-700'
+                  }`}>
+                    {subscriptionPlan === 'paid' ? (
+                      <>
+                        <Crown className="h-3 w-3 mr-1" />
+                        <span>PRO</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>FREE</span>
+                      </>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{subscriptionPlan === 'paid' 
+                    ? 'Unlimited Pro Plan - No client limits!' 
+                    : 'Free Plan - Limited to 5 clients'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
           <div className="flex gap-3">
+            {/* Only show subscription button for free tier */}
+            {subscriptionPlan === 'free' && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      className="p-2 rounded-full hover:bg-blue-600 transition" 
+                      aria-label="Upgrade to Pro"
+                      onClick={() => navigate("/payment")}
+                    >
+                      <CreditCard className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Upgrade to Pro</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            
             <button 
               className="p-2 rounded-full hover:bg-blue-600 transition" 
               aria-label="Search"
@@ -63,6 +158,13 @@ export default function Dashboard() {
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
+                
+                {/* Subscription Management */}
+                <DropdownMenuItem onClick={() => navigate("/payment")}>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Subscription</span>
+                </DropdownMenuItem>
+                
                 <DropdownMenuItem onClick={() => navigate("/settings")}>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
@@ -70,6 +172,7 @@ export default function Dashboard() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => {
                   localStorage.removeItem('isLoggedIn');
+                  localStorage.removeItem('userPlan');
                   navigate("/");
                   window.location.reload(); // Force a refresh to clear any cached state
                 }}>

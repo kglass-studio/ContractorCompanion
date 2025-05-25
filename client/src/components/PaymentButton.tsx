@@ -30,17 +30,22 @@ export default function PaymentButton({ amount, onSuccess, onError }: PaymentBut
     }
   }, []);
 
-  // Override the fetch method to include user ID
+  // Override the fetch method to include user ID and provide better logging
   const originalFetch = window.fetch;
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     // Only modify payment-related requests
     if (typeof input === 'string' && 
         (input.includes('/order') || input.includes('/setup'))) {
       
+      console.log(`Processing PayPal request to: ${input}`);
+      
       // Add the user ID header to the request
       const headers = new Headers(init?.headers || {});
       if (userId) {
         headers.set('x-user-id', userId);
+        console.log(`Including user ID in request: ${userId}`);
+      } else {
+        console.log('Warning: No user ID available for payment request');
       }
       
       // Create new init object with updated headers
@@ -49,7 +54,33 @@ export default function PaymentButton({ amount, onSuccess, onError }: PaymentBut
         headers
       };
       
-      return originalFetch(input, newInit);
+      // Log the request for debugging
+      if (init?.body) {
+        try {
+          const bodyData = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+          console.log('Payment request data:', bodyData);
+        } catch (e) {
+          console.log('Could not parse request body for logging');
+        }
+      }
+      
+      try {
+        const response = await originalFetch(input, newInit);
+        
+        // Clone the response so we can log it without consuming it
+        const clonedResponse = response.clone();
+        try {
+          const responseData = await clonedResponse.json();
+          console.log('Payment API response:', responseData);
+        } catch (e) {
+          console.log('Could not parse response for logging');
+        }
+        
+        return response;
+      } catch (error) {
+        console.error('Payment API error:', error);
+        throw error;
+      }
     }
     
     // For all other requests, use the original fetch
