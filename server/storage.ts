@@ -953,12 +953,18 @@ export class MemStorage implements IStorage {
     const client = this.clients.get(id);
     if (!client) return undefined;
 
+    // Create a properly updated client with all fields preserved
     const updatedClient: Client = {
       ...client,
       ...updateData,
       updatedAt: new Date(),
     };
+    
+    // Save the updated client to the Map
     this.clients.set(id, updatedClient);
+    console.log("Client updated in MemStorage:", updatedClient);
+    
+    // Return the full updated client object
     return updatedClient;
   }
 
