@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useClients } from "@/hooks/useClients";
 import { PlusIcon, ArrowLeftIcon, SearchIcon, FilterIcon, MapPin, Phone, MessageSquare } from "lucide-react";
@@ -116,7 +116,13 @@ interface ClientListProps {
 export default function ClientList({ statusFilter }: ClientListProps) {
   const [, navigate] = useLocation();
   const [activeFilter, setActiveFilter] = useState(statusFilter || "all");
-  const { data: clients, isLoading } = useClients({ status: activeFilter !== "all" ? activeFilter : undefined });
+  const { data: clients = [], isLoading, refetch } = useClients({ status: activeFilter !== "all" ? activeFilter : undefined });
+  
+  // Ensure clients are loaded when component mounts or changes filter
+  useEffect(() => {
+    console.log("ClientList: Forcing client data refresh");
+    refetch();
+  }, [refetch, activeFilter]);
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);

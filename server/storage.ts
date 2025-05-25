@@ -917,6 +917,7 @@ export class MemStorage implements IStorage {
     // Ensure all fields are properly set with default values if needed
     const client: Client = {
       id,
+      userId: insertClient.userId || 'default-user', // Ensure userId is always set
       name: insertClient.name,
       phone: insertClient.phone,
       email: insertClient.email || null,
