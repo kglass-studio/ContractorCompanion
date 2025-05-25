@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import ClientList from "@/components/clients/ClientList";
-import ClientCreationModal from "@/components/clients/ClientCreationModal";
+import AddClientModal from "@/components/clients/AddClientModal";
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -35,7 +35,7 @@ export default function ClientsPage() {
       </div>
       
       {/* Client Creation Modal */}
-      <ClientCreationModal 
+      <AddClientModal 
         open={showModal} 
         onOpenChange={setShowModal} 
       />
