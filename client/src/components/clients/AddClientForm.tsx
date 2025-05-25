@@ -27,6 +27,7 @@ export default function AddClientForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const form = useForm({
     resolver: zodResolver(insertClientSchema.extend({
@@ -84,12 +85,37 @@ export default function AddClientForm() {
       
       console.log("Client created:", client);
       
-      // Create initial note if provided
-      if (values.initialNotes) {
-        await createNote({
-          clientId: client.id,
-          text: values.initialNotes,
-        });
+      // Create initial note if provided or if there's a photo
+      if (values.initialNotes || selectedFile) {
+        try {
+          // Create a FormData object for the file upload
+          const formData = new FormData();
+          
+          // Add the note text
+          const noteText = values.initialNotes || `Initial photo for ${client.name}`;
+          formData.append('text', noteText);
+          formData.append('clientId', client.id.toString());
+          
+          // Add the file if available
+          if (selectedFile) {
+            formData.append('photo', selectedFile);
+          }
+          
+          // Create the note with the photo
+          await fetch('/api/notes', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          console.log("Note created with photo");
+        } catch (error) {
+          console.error("Error creating initial note:", error);
+          toast({
+            title: "Error",
+            description: "Failed to create initial note, but client was created",
+            variant: "destructive",
+          });
+        }
       }
       
       // Create followup if provided
@@ -137,20 +163,25 @@ export default function AddClientForm() {
             <h1 className="text-xl font-bold">Add New Client</h1>
           </div>
           <Button 
+            type="submit" 
             variant="outline" 
             size="sm" 
             className="bg-white text-primary font-medium hover:bg-gray-100"
-            onClick={form.handleSubmit(onSubmit)}
             disabled={isSubmitting}
           >
-            Save
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </div>
       </header>
 
       <div className="p-4">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            console.log("Form submitted directly");
+            const formValues = form.getValues();
+            onSubmit(formValues);
+          }} className="space-y-4">
             {/* Basic Info Section */}
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="font-semibold mb-3">Client Information</h2>
@@ -333,6 +364,7 @@ export default function AddClientForm() {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
+                            setSelectedFile(file);
                             toast({
                               title: "Photo selected",
                               description: `File "${file.name}" will be attached to the initial note`,
