@@ -199,10 +199,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/followups", async (req: Request, res: Response) => {
     try {
-      const followupData = insertFollowupSchema.parse(req.body);
+      console.log("Received follow-up data:", req.body);
+      
+      // Manually validate and transform the data
+      const { clientId, action, scheduledDate, isCompleted, reminder } = req.body;
+      
+      if (!clientId || !action || !scheduledDate) {
+        return res.status(400).json({ 
+          message: "Missing required fields: clientId, action, and scheduledDate are required" 
+        });
+      }
+      
+      // Convert string date to Date object if it's a string
+      const parsedDate = typeof scheduledDate === 'string' 
+        ? new Date(scheduledDate) 
+        : scheduledDate;
+      
+      // Check if the date is valid
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+      
+      // Create the data object with the proper format
+      const followupData = {
+        clientId: Number(clientId),
+        action,
+        scheduledDate: parsedDate,
+        isCompleted: isCompleted ?? false,
+        reminder: reminder ?? true
+      };
+      
       const followup = await storage.createFollowup(followupData);
       res.status(201).json(followup);
     } catch (error) {
+      console.error("Error creating followup:", error);
       if (error instanceof z.ZodError) {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: validationError.message });
