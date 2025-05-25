@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthContext } from "../App";
 
 // Form validation schema
 const loginSchema = z.object({
@@ -31,7 +30,6 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuthContext();
 
   // Initialize form
   const form = useForm<LoginFormValues>({
@@ -56,12 +54,10 @@ export default function LoginPage() {
       // In a real app, this would come from the server
       const userId = `user-${values.email.split('@')[0]}-${Date.now()}`;
       
-      // Store the email for profile display
+      // Store authentication info directly in localStorage
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userId', userId);
       localStorage.setItem('userEmail', values.email);
-      
-      // Use the login function from our auth context
-      // This will set the proper user ID and handle localStorage
-      login(userId);
 
       // Show success message
       toast({
