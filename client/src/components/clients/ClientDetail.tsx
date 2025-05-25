@@ -54,25 +54,37 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
   }
 
   const handleUpdateStatus = async (newStatus: string) => {
+    if (newStatus === client.status) return;
+    
+    setUpdatingStatus(true);
+    
     try {
       console.log("Updating client status to:", newStatus);
-      setUpdatingStatus(true);
       
-      // Use our specialized status update function
-      const updatedClient = await updateClientStatus(client.id, newStatus);
-      console.log("Client status updated response:", updatedClient);
+      // Make a direct fetch call to ensure we bypass any offline detection
+      const response = await fetch(`/api/clients/${client.id}/update-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
       
-      // Update the local client data
-      const localUpdatedClient = {
+      if (!response.ok) {
+        throw new Error(`Failed to update status: ${response.statusText}`);
+      }
+      
+      // Update the UI immediately with the new status
+      const updatedClient = {
         ...client,
         status: newStatus,
         updatedAt: new Date()
       };
       
       // Force refresh all client data in the background
-      await queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}`] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/dashboard/counts"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/counts"] });
       
       // Show success message
       toast({
@@ -80,15 +92,16 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
         description: `Client status has been updated to ${newStatus}`,
       });
       
-      // Window reload as a last resort to ensure data refresh
-      window.location.reload();
+      // Reload the page to ensure we see the latest data
+      window.location.href = `/clients/${client.id}`;
     } catch (error) {
       console.error("Error updating client status:", error);
       
-      // Even if there's an error on the server, update the UI optimistically
+      // Handle network errors gracefully
       toast({
-        title: "Status Updated Locally",
-        description: "Changes will be saved when you're back online.",
+        title: "Error updating status",
+        description: "Please try again or check your connection.",
+        variant: "destructive"
       });
     } finally {
       setUpdatingStatus(false);
