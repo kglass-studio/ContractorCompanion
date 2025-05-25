@@ -137,27 +137,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date()
       };
       
-      // Special handling for MemStorage
+      // Direct server-side update for testing purposes
       if (storage instanceof MemStorage) {
-        // Get the clients map
+        try {
+          // Get all clients from storage
+          const allClients = await storage.getClients();
+          console.log("Current clients in storage:", allClients);
+          
+          // Find the client that needs to be updated
+          const clientToUpdate = allClients.find(c => c.id === id);
+          if (clientToUpdate) {
+            console.log("Found client to update:", clientToUpdate);
+            
+            // Update the client's status directly
+            clientToUpdate.status = validStatus;
+            clientToUpdate.updatedAt = new Date();
+            
+            // Log the directly updated client
+            console.log("Updated client with new status:", clientToUpdate);
+            
+            // Return the updated client as response
+            return res.status(200).json(clientToUpdate);
+          }
+        } catch (directUpdateError) {
+          console.error("Error during direct client update:", directUpdateError);
+        }
+      }
+      
+      // Fallback approach for direct memory access
+      try {
+        // Access the private clients Map directly
         const clientsMap = (storage as any).clients;
         
         if (clientsMap) {
-          // Check if we're using Map or Array storage
           if (typeof clientsMap.set === 'function') {
-            // Using Map
-            clientsMap.set(id, updatedClient);
+            // Using Map storage
+            const clientToUpdate = clientsMap.get(id);
+            if (clientToUpdate) {
+              // Update status directly
+              clientToUpdate.status = validStatus;
+              clientToUpdate.updatedAt = new Date();
+              
+              // Save back to map
+              clientsMap.set(id, clientToUpdate);
+              
+              console.log("Updated client directly in Map:", clientToUpdate);
+              return res.status(200).json(clientToUpdate);
+            }
           } else if (Array.isArray(clientsMap)) {
-            // Using Array
+            // Using Array storage
             const index = clientsMap.findIndex(c => c.id === id);
             if (index !== -1) {
-              clientsMap[index] = updatedClient;
+              // Update status directly
+              clientsMap[index].status = validStatus;
+              clientsMap[index].updatedAt = new Date();
+              
+              console.log("Updated client directly in Array:", clientsMap[index]);
+              return res.status(200).json(clientsMap[index]);
             }
           }
-          
-          console.log("Updated client status directly in memory:", updatedClient);
-          return res.status(200).json(updatedClient);
         }
+      } catch (memoryAccessError) {
+        console.error("Error accessing client memory storage:", memoryAccessError);
       }
       
       // If we get here, try the standard update method
