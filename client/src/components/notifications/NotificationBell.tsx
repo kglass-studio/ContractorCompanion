@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BellIcon } from "lucide-react";
-import { useNotifications } from "@/hooks/useNotifications";
+import { useNotifications, Notification } from "@/hooks/useNotifications";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,11 @@ export function NotificationBell() {
   } = useNotifications();
   const [, navigate] = useLocation();
 
-  const handleNotificationClick = (notification: any) => {
+  // Cast the data to the correct type
+  const typedNotifications = (notifications || []) as Notification[];
+  const typedUnreadNotifications = (unreadNotifications || []) as Notification[];
+
+  const handleNotificationClick = (notification: Notification) => {
     // Mark the notification as read
     markAsRead(notification.id);
     setOpen(false);
@@ -39,12 +43,12 @@ export function NotificationBell() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <BellIcon className="h-5 w-5" />
-          {unreadNotifications.length > 0 && (
+          {typedUnreadNotifications.length > 0 && (
             <Badge
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500"
               variant="destructive"
             >
-              {unreadNotifications.length}
+              {typedUnreadNotifications.length}
             </Badge>
           )}
         </Button>
@@ -52,7 +56,7 @@ export function NotificationBell() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between p-2 border-b">
           <h3 className="font-medium">Notifications</h3>
-          {unreadNotifications.length > 0 && (
+          {typedUnreadNotifications.length > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
@@ -64,12 +68,12 @@ export function NotificationBell() {
           )}
         </div>
         <div className="max-h-96 overflow-y-auto py-1">
-          {notifications.length === 0 ? (
+          {typedNotifications.length === 0 ? (
             <div className="px-2 py-4 text-center text-sm text-gray-500">
               No notifications
             </div>
           ) : (
-            notifications.map((notification) => (
+            typedNotifications.map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
                 className={cn(
@@ -81,7 +85,7 @@ export function NotificationBell() {
                 <div className="flex justify-between w-full">
                   <span className="font-medium">{notification.title}</span>
                   <span className="text-xs text-gray-500">
-                    {format(new Date(notification.createdAt), 'h:mm a')}
+                    {format(notification.createdAt, 'h:mm a')}
                   </span>
                 </div>
                 <p className="text-sm text-gray-600">{notification.message}</p>
