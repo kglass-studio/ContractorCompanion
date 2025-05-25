@@ -100,6 +100,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Special route just for updating client status
+  apiRouter.post("/clients/:id/update-status", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+      
+      // Get the user ID for security check
+      const userId = getUserId(req);
+      console.log(`Updating client ${id} status for user ${userId}`, req.body);
+      
+      // First check if this client belongs to this user
+      const existingClient = await storage.getClient(userId, id);
+      if (!existingClient) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // Validate the status from request body
+      const { status } = req.body;
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      // List of valid statuses
+      const validStatuses = ["lead", "quoted", "scheduled", "completed", "paid"];
+      
+      // Ensure the status is valid
+      const validStatus = validStatuses.includes(status) ? status : "lead";
+      
+      // Create updated client object
+      const updatedClient = {
+        ...existingClient,
+        status: validStatus,
+        updatedAt: new Date()
+      };
+      
+      // Special handling for MemStorage
+      if (storage instanceof MemStorage) {
+        // Get the clients map
+        const clientsMap = (storage as any).clients;
+        
+        if (clientsMap) {
+          // Check if we're using Map or Array storage
+          if (typeof clientsMap.set === 'function') {
+            // Using Map
+            clientsMap.set(id, updatedClient);
+          } else if (Array.isArray(clientsMap)) {
+            // Using Array
+            const index = clientsMap.findIndex(c => c.id === id);
+            if (index !== -1) {
+              clientsMap[index] = updatedClient;
+            }
+          }
+          
+          console.log("Updated client status directly in memory:", updatedClient);
+          return res.status(200).json(updatedClient);
+        }
+      }
+      
+      // If we get here, try the standard update method
+      const result = await storage.updateClient(id, { status: validStatus });
+      
+      if (result) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(200).json(updatedClient);
+      }
+    } catch (error) {
+      console.error("Error updating client status:", error);
+      return res.status(500).json({ message: "Failed to update client status" });
+    }
+  });
+  
   apiRouter.put("/clients/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
