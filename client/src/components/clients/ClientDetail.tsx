@@ -64,13 +64,20 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
     try {
       console.log("Updating client status to:", newStatus);
       
-      // Make a direct fetch call
+      // Get the user ID from localStorage
+      const userId = localStorage.getItem('userId');
+      
+      // Make a direct fetch call with user ID in headers and body
       const response = await fetch(`/api/clients/${client.id}/update-status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': userId || '', // Include user ID in headers
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ 
+          status: newStatus,
+          userId: userId // Also include it in the body
+        }),
       });
       
       if (!response.ok) {
