@@ -102,12 +102,9 @@ export default function LandingPage() {
                 size="lg" 
                 variant="secondary" 
                 className="text-lg px-8 py-6 bg-blue-600 text-white hover:bg-blue-700 mt-4 sm:mt-0"
-                onClick={() => {
-                  localStorage.setItem('isLoggedIn', 'true');
-                  window.location.href = '/clients';
-                }}
+                onClick={() => navigate("/login")}
               >
-                Demo Login (No Password)
+                Login
               </Button>
             </div>
           </div>
