@@ -22,20 +22,20 @@ export interface IStorage {
   deleteClient(userId: string, id: number): Promise<boolean>;
 
   // Notes
-  getNotes(userId: string, clientId: number): Promise<Note[]>;
-  getNote(userId: string, id: number): Promise<Note | undefined>;
-  createNote(userId: string, note: InsertNote): Promise<Note>;
-  deleteNote(userId: string, id: number): Promise<boolean>;
+  getNotes(clientId: number): Promise<Note[]>;
+  getNote(id: number): Promise<Note | undefined>;
+  createNote(note: InsertNote): Promise<Note>;
+  deleteNote(id: number): Promise<boolean>;
 
   // Followups
-  getFollowups(userId: string): Promise<Followup[]>;
-  getFollowupsByClient(userId: string, clientId: number): Promise<Followup[]>;
-  getTodaysFollowups(userId: string): Promise<Followup[]>;
-  getFollowup(userId: string, id: number): Promise<Followup | undefined>;
-  createFollowup(userId: string, followup: InsertFollowup): Promise<Followup>;
-  updateFollowup(userId: string, id: number, followup: Partial<Followup>): Promise<Followup | undefined>;
-  completeFollowup(userId: string, id: number): Promise<Followup | undefined>;
-  deleteFollowup(userId: string, id: number): Promise<boolean>;
+  getFollowups(): Promise<Followup[]>;
+  getFollowupsByClient(clientId: number): Promise<Followup[]>;
+  getTodaysFollowups(): Promise<Followup[]>;
+  getFollowup(id: number): Promise<Followup | undefined>;
+  createFollowup(followup: InsertFollowup): Promise<Followup>;
+  updateFollowup(id: number, followup: Partial<Followup>): Promise<Followup | undefined>;
+  completeFollowup(id: number): Promise<Followup | undefined>;
+  deleteFollowup(id: number): Promise<boolean>;
 }
 
 // Import required database packages

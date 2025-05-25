@@ -106,13 +106,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid client ID" });
       }
-
-      const clientData = insertClientSchema.partial().parse(req.body);
-      const client = await storage.updateClient(id, clientData);
-      if (!client) {
+      
+      // Get the user ID for security check
+      const userId = getUserId(req);
+      
+      // First check if this client belongs to this user
+      const existingClient = await storage.getClient(userId, id);
+      if (!existingClient) {
         return res.status(404).json({ message: "Client not found" });
       }
-
+      
+      // User owns this client, proceed with update
+      const clientData = insertClientSchema.partial().parse(req.body);
+      const client = await storage.updateClient(userId, id, clientData);
+      
       res.json(client);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -129,8 +136,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid client ID" });
       }
-
-      const success = await storage.deleteClient(id);
+      
+      // Get the user ID for security check
+      const userId = getUserId(req);
+      
+      // First check if this client belongs to this user
+      const existingClient = await storage.getClient(userId, id);
+      if (!existingClient) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // User owns this client, proceed with deletion
+      const success = await storage.deleteClient(userId, id);
       if (!success) {
         return res.status(404).json({ message: "Client not found" });
       }
@@ -141,14 +158,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Notes endpoints
+  // Notes endpoints with user isolation
   apiRouter.get("/clients/:clientId/notes", async (req: Request, res: Response) => {
     try {
       const clientId = parseInt(req.params.clientId);
       if (isNaN(clientId)) {
         return res.status(400).json({ message: "Invalid client ID" });
       }
-
+      
+      // Get user ID for security check
+      const userId = getUserId(req);
+      
+      // First verify the client belongs to this user
+      const client = await storage.getClient(userId, clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // Client belongs to user, proceed with fetching notes
       const notes = await storage.getNotes(clientId);
       res.json(notes);
     } catch (error) {
