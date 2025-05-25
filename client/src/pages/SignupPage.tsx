@@ -72,8 +72,27 @@ export default function SignupPage() {
       // For now, we'll simulate the API call with a timeout
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Set user as logged in
+      // Generate a unique user ID
+      const userId = `user-${values.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+      
+      // Store all user information
       localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('userEmail', values.email);
+      localStorage.setItem('userName', values.name);
+      localStorage.setItem('userPlan', selectedPlan);
+      
+      // Store registered users in a local database
+      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      registeredUsers.push({
+        id: userId,
+        email: values.email,
+        name: values.name,
+        password: values.password, // In a real app, this would be hashed
+        plan: selectedPlan,
+        createdAt: new Date().toISOString()
+      });
+      localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
       
       // Show success message
       toast({

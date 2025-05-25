@@ -50,14 +50,27 @@ export default function LoginPage() {
       // For now, we'll simulate the API call with a timeout
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Generate a unique user ID based on the email
-      // In a real app, this would come from the server
-      const userId = `user-${values.email.split('@')[0]}-${Date.now()}`;
+      // Get registered users from localStorage
+      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
       
-      // Store authentication info directly in localStorage
+      // Find the user with matching email
+      const user = registeredUsers.find((u: any) => u.email === values.email);
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      // Check password (in a real app, this would use proper hashing)
+      if (user.password !== values.password) {
+        throw new Error('Invalid password');
+      }
+      
+      // Set user as logged in with all their information
       localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userId', userId);
-      localStorage.setItem('userEmail', values.email);
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('userName', user.name);
+      localStorage.setItem('userPlan', user.plan);
 
       // Show success message
       toast({

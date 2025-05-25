@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeftIcon, UserIcon, MailIcon, KeyIcon } from "lucide-react";
+import { ArrowLeftIcon, UserIcon, MailIcon, KeyIcon, CreditCardIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthContext } from "../App";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
   const [, navigate] = useLocation();
@@ -17,14 +17,16 @@ export default function ProfilePage() {
   });
   
   // Get authentication info from localStorage directly
-  // This is a fallback for when the auth context isn't available
   const [userId, setUserId] = useState<string>('');
+  const [userPlan, setUserPlan] = useState<'free' | 'unlimited'>('free');
   
   // Create a local logout function
   const logout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userPlan');
   };
 
   // Extract user info directly from localStorage
@@ -34,21 +36,37 @@ export default function ProfilePage() {
     if (storedUserId) {
       setUserId(storedUserId);
       
-      // Parse the user info from the userId (since we're storing it in the format user-{name}-{timestamp})
-      const parts = storedUserId.split('-');
-      if (parts.length >= 2) {
-        // Extract email from login process (or use a placeholder if not available)
-        let extractedEmail = localStorage.getItem('userEmail') || 'user@example.com';
-        
-        // Extract name from userId (removing any timestamp parts)
-        let extractedName = parts[1];
-        // Capitalize first letter
-        extractedName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1);
-        
+      // Get user info directly from localStorage
+      const storedEmail = localStorage.getItem('userEmail');
+      const storedName = localStorage.getItem('userName');
+      const storedPlan = localStorage.getItem('userPlan') as 'free' | 'unlimited';
+      
+      if (storedEmail && storedName) {
         setUserInfo({
-          name: extractedName,
-          email: extractedEmail
+          name: storedName,
+          email: storedEmail
         });
+        
+        if (storedPlan) {
+          setUserPlan(storedPlan);
+        }
+      } else {
+        // Try to find user in registered users
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        const user = registeredUsers.find((user: any) => user.id === storedUserId);
+        
+        if (user) {
+          setUserInfo({
+            name: user.name,
+            email: user.email
+          });
+          setUserPlan(user.plan || 'free');
+          
+          // Update localStorage for future use
+          localStorage.setItem('userEmail', user.email);
+          localStorage.setItem('userName', user.name);
+          localStorage.setItem('userPlan', user.plan || 'free');
+        }
       }
     } else {
       // Redirect to login if no user ID found
@@ -116,6 +134,27 @@ export default function ProfilePage() {
                     Email
                   </p>
                   <p className="font-medium">{userInfo.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 flex items-center justify-center sm:justify-start gap-2">
+                    <CreditCardIcon size={16} />
+                    Subscription Plan
+                  </p>
+                  <div className="flex items-center">
+                    <Badge className={userPlan === 'unlimited' ? 'bg-emerald-500' : 'bg-blue-500'}>
+                      {userPlan === 'unlimited' ? 'Unlimited' : 'Free'}
+                    </Badge>
+                    {userPlan === 'free' && (
+                      <Button 
+                        variant="link" 
+                        size="sm"
+                        className="text-primary ml-2 p-0 h-auto"
+                        onClick={() => navigate('/payment')}
+                      >
+                        Upgrade
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 flex items-center justify-center sm:justify-start gap-2">
