@@ -853,17 +853,16 @@ export class MemStorage implements IStorage {
     this.noteId = 1;
     this.followupId = 1;
     
-    // Add test data if needed
-    // this.addSampleData();
+    // Add test data
+    this.addSampleData();
   }
   
   // For testing purposes only - adds sample data with userId
-  /*
   private addSampleData() {
-    // Example client with userId
-    const client: Client = {
+    // Example clients with userId
+    const client1: Client = {
       id: this.clientId++,
-      userId: "test-user-1",
+      userId: "default-user",
       name: "John Doe",
       phone: "555-123-4567",
       email: "john@example.com",
@@ -871,13 +870,28 @@ export class MemStorage implements IStorage {
       city: "Anytown",
       state: "CA",
       zipCode: "90210",
-      status: JobStatus.LEAD,
+      status: "lead",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    this.clients.set(client.id, client);
+    this.clients.set(client1.id, client1);
+    
+    const client2: Client = {
+      id: this.clientId++,
+      userId: "default-user",
+      name: "Sarah Smith",
+      phone: "555-987-6543",
+      email: "sarah@example.com",
+      addressLine1: "456 Oak Ave",
+      city: "Somewhere",
+      state: "NY",
+      zipCode: "10001",
+      status: "quoted",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.clients.set(client2.id, client2);
   }
-  */
 
   // Client methods with user isolation
   async getClients(userId: string): Promise<Client[]> {
