@@ -16,9 +16,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useClientById } from "@/hooks/useClients";
-import { useCreateFollowup } from "@/hooks/useFollowups";
-import { insertFollowupSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AddFollowupPage() {
   const params = useParams();
@@ -26,7 +25,6 @@ export default function AddFollowupPage() {
   const { toast } = useToast();
   const clientId = parseInt(params.id || "0");
   const { data: client } = useClientById(clientId);
-  const createFollowup = useCreateFollowup();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formSchema = z.object({
@@ -54,14 +52,31 @@ export default function AddFollowupPage() {
       const { scheduledDate, scheduledTime, action } = values;
       const dateTime = new Date(`${scheduledDate}T${scheduledTime}`);
       
-      // Create the followup with stringified date that the server expects
-      await createFollowup.mutateAsync({
+      // Create payload for the API directly without going through the hooks
+      const followupData = {
         clientId: client.id,
         action,
         scheduledDate: dateTime.toISOString(),
         isCompleted: false,
-        reminder: true,
-      });
+        reminder: true
+      };
+      
+      console.log("Sending followup data:", followupData);
+      
+      // Use apiRequest directly to avoid any transformation issues
+      const response = await apiRequest("POST", "/api/followups", followupData);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create follow-up");
+      }
+      
+      const result = await response.json();
+      console.log("Follow-up creation result:", result);
+      
+      // Manually invalidate relevant queries
+      fetch(`/api/clients/${client.id}/followups`);
+      fetch("/api/followups");
       
       toast({
         title: "Follow-up added",
@@ -71,11 +86,21 @@ export default function AddFollowupPage() {
       navigate(`/clients/${client.id}`);
     } catch (error) {
       console.error("Failed to create follow-up:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add follow-up. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Display more specific error information to help debug
+      if (error instanceof Error) {
+        toast({
+          title: "Error",
+          description: `Failed to add follow-up: ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add follow-up. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
