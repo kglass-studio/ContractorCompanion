@@ -181,11 +181,32 @@ export default function PaymentPage() {
                       
                       <div className="flex justify-center mt-4">
                         <div className="w-full max-w-xs">
-                          <PaymentButton
-                            amount="15.00"
-                            onSuccess={handlePaymentSuccess}
-                            onError={handlePaymentError}
-                          />
+                          {/* Use a regular button for testing instead of PayPal while credentials are being fixed */}
+                          <Button
+                            className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md"
+                            onClick={() => {
+                              // Simulate a successful payment for testing
+                              console.log("Simulating successful payment");
+                              setPaymentStatus("processing");
+                              
+                              // Store user's paid status in localStorage
+                              localStorage.setItem('userPlan', 'paid');
+                              
+                              // Simulate a short delay for processing
+                              setTimeout(() => {
+                                handlePaymentSuccess({
+                                  id: `sim-${Date.now()}`,
+                                  status: 'COMPLETED'
+                                });
+                              }, 2000);
+                            }}
+                          >
+                            Pay $15.00
+                          </Button>
+                          
+                          <div className="mt-2 text-xs text-gray-500">
+                            (This is a test button. In production, this would be a real PayPal button.)
+                          </div>
                         </div>
                       </div>
                     </div>
