@@ -8,6 +8,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const apiRouter = express.Router();
@@ -279,6 +280,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register API routes with /api prefix
   app.use("/api", apiRouter);
+
+  // PayPal payment routes
+  app.get("/setup", async (req, res) => {
+    await loadPaypalDefault(req, res);
+  });
+
+  app.post("/order", async (req, res) => {
+    await createPaypalOrder(req, res);
+  });
+
+  app.post("/order/:orderID/capture", async (req, res) => {
+    await capturePaypalOrder(req, res);
+  });
 
   const httpServer = createServer(app);
   return httpServer;
