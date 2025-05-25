@@ -15,6 +15,7 @@ import PricingPage from "@/pages/PricingPage";
 import SignupPage from "@/pages/SignupPage";
 import PaymentPage from "@/pages/PaymentPage";
 import CalendarPage from "@/pages/CalendarPage";
+import ProfilePage from "@/pages/ProfilePage";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { useState, useEffect } from "react";
 import { OnlineStatusProvider } from "@/hooks/useOnlineStatus";
@@ -72,6 +73,7 @@ function Router() {
           <Route path="/clients/:id/followup/add" component={AddFollowupPage} />
           <Route path="/clients/:id" component={ClientDetailPage} />
           <Route path="/calendar" component={CalendarPage} />
+          <Route path="/profile" component={ProfilePage} />
         </>
       ) : (
         // Redirect to landing page if not authenticated and trying to access protected routes
