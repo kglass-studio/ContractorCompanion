@@ -109,7 +109,7 @@ function useAuth() {
 }
 
 function Router() {
-  const { isAuthenticated, isLoading, userId, login, logout } = useAuth();
+  const { isAuthenticated, isLoading, userId, login, logout } = useAuthContext();
   const [, navigate] = useLocation();
 
   // If still loading auth status, show nothing (or a loading spinner)
@@ -154,16 +154,29 @@ function Router() {
   );
 }
 
+// AuthProvider component to provide auth context to the entire app
+function AuthProvider({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  
+  return (
+    <AuthContext.Provider value={auth}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <OnlineStatusProvider>
-          <MobileLayout>
-            <Router />
-          </MobileLayout>
-        </OnlineStatusProvider>
+        <AuthProvider>
+          <Toaster />
+          <OnlineStatusProvider>
+            <MobileLayout>
+              <Router />
+            </MobileLayout>
+          </OnlineStatusProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
