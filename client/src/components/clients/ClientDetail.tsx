@@ -58,18 +58,30 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
       console.log("Updating client status to:", newStatus);
       setUpdatingStatus(true);
       
-      // Use one of the valid JobStatus values to ensure type safety
-      const validStatus = Object.values(JobStatus).includes(newStatus as any) 
-        ? newStatus 
-        : JobStatus.LEAD;
+      // Use fetch directly to update the client status
+      const response = await fetch(`/api/clients/${client.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
       
-      // Make the API call to update the client status with a valid status
-      await updateClient(client.id, { status: validStatus });
+      if (!response.ok) {
+        throw new Error(`Failed to update status: ${response.statusText}`);
+      }
       
-      // Force refresh client data
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/counts"] });
+      // Update local client data to immediately reflect the change
+      // This ensures the UI updates even if the refetch is delayed
+      setClient(prev => prev ? { ...prev, status: newStatus } : null);
+      
+      // Force refresh client data from server
+      await queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}`] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/dashboard/counts"] });
+      
+      // Immediate refetch to ensure we have the latest data
+      refetch();
       
       // Show success message
       toast({
@@ -80,7 +92,7 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
       console.error("Error updating client status:", error);
       toast({
         title: "Error",
-        description: "Failed to update client status",
+        description: "Failed to update client status. Please try again.",
         variant: "destructive",
       });
     } finally {
