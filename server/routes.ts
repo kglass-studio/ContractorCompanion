@@ -9,8 +9,13 @@ import {
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+import { uploadRouter, serveUploads } from "./uploads";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up file uploads
+  serveUploads(app);
+  app.use("/api/uploads", uploadRouter);
+  
   const apiRouter = express.Router();
   
   // Clients endpoints
