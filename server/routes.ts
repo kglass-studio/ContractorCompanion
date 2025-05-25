@@ -313,6 +313,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Get user ID for security check
+      const userId = getUserId(req);
+      
+      // Verify the client belongs to this user before creating a followup
+      const client = await storage.getClient(userId, Number(clientId));
+      if (!client) {
+        return res.status(404).json({ message: "Client not found or not authorized" });
+      }
+      
       // Convert string date to Date object if it's a string
       const parsedDate = typeof scheduledDate === 'string' 
         ? new Date(scheduledDate) 
@@ -350,7 +359,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid followup ID" });
       }
+      
+      // Get user ID for security check
+      const userId = getUserId(req);
+      
+      // Get the followup
+      const existingFollowup = await storage.getFollowup(id);
+      if (!existingFollowup) {
+        return res.status(404).json({ message: "Followup not found" });
+      }
+      
+      // Verify the client associated with this followup belongs to this user
+      const client = await storage.getClient(userId, existingFollowup.clientId);
+      if (!client) {
+        return res.status(403).json({ message: "Not authorized to update this followup" });
+      }
 
+      // User owns the client, proceed with update
       const followupData = insertFollowupSchema.partial().parse(req.body);
       const followup = await storage.updateFollowup(id, followupData);
       if (!followup) {
@@ -373,17 +398,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid followup ID" });
       }
-
+      
+      // Get user ID for security check
+      const userId = getUserId(req);
+      
+      // Get the followup first
+      const existingFollowup = await storage.getFollowup(id);
+      if (!existingFollowup) {
+        return res.status(404).json({ message: "Followup not found" });
+      }
+      
+      // Verify the client associated with this followup belongs to this user
+      const client = await storage.getClient(userId, existingFollowup.clientId);
+      if (!client) {
+        return res.status(403).json({ message: "Not authorized to complete this followup" });
+      }
+      
+      // User owns the client, proceed with completing the followup
       const followup = await storage.completeFollowup(id);
       if (!followup) {
         return res.status(404).json({ message: "Followup not found" });
       }
       
       // Create a notification when a follow-up is completed
-      const client = await storage.getClient(followup.clientId);
-      if (client) {
-        createFollowupCompletionNotification(followup, client.name);
-      }
+      createFollowupCompletionNotification(followup, client.name);
 
       res.json(followup);
     } catch (error) {
@@ -397,7 +435,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid followup ID" });
       }
-
+      
+      // Get user ID for security check
+      const userId = getUserId(req);
+      
+      // Get the followup first
+      const existingFollowup = await storage.getFollowup(id);
+      if (!existingFollowup) {
+        return res.status(404).json({ message: "Followup not found" });
+      }
+      
+      // Verify the client associated with this followup belongs to this user
+      const client = await storage.getClient(userId, existingFollowup.clientId);
+      if (!client) {
+        return res.status(403).json({ message: "Not authorized to delete this followup" });
+      }
+      
+      // User owns the client, proceed with deletion
       const success = await storage.deleteFollowup(id);
       if (!success) {
         return res.status(404).json({ message: "Followup not found" });
