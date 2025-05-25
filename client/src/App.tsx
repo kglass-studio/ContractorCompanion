@@ -18,21 +18,82 @@ import PaymentPage from "@/pages/PaymentPage";
 import CalendarPage from "@/pages/CalendarPage";
 import ProfilePage from "@/pages/ProfilePage";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { OnlineStatusProvider } from "@/hooks/useOnlineStatus";
 
-// Simple auth check (this would be replaced with a real auth system)
+// Create authentication context to share auth state throughout the app
+interface AuthContextType {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  userId: string;
+  login: (specificUserId?: string) => void;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+// Custom hook to access the auth context
+export function useAuthContext() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuthContext must be used within an AuthProvider");
+  }
+  return context;
+}
+
+// Authentication hook with user ID management and login/logout functionality
 function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [userId, setUserId] = useState<string>('');
+
+  // Function to log user out - clear auth state and user ID
+  const logout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userId');
+    setIsAuthenticated(false);
+    setUserId('');
+    
+    // Reset all queries to ensure data is reloaded after login
+    queryClient.clear();
+  };
+
+  // Function to log user in with a specific ID or generate a new one
+  const login = (specificUserId?: string) => {
+    // Generate a unique ID for this user or use the one provided
+    const newUserId = specificUserId || 
+                      `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('userId', newUserId);
+    setIsAuthenticated(true);
+    setUserId(newUserId);
+    
+    // Reset all queries to ensure data is loaded fresh
+    queryClient.clear();
+  };
 
   useEffect(() => {
-    // Check if user is logged in (in a real app, this would verify a token)
+    // Check if user is logged in and get user ID
     const checkAuth = async () => {
       try {
-        // Simulate checking auth status
+        // Check auth status
         const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        setIsAuthenticated(loggedIn);
+        
+        // Get user ID from local storage
+        const currentUserId = localStorage.getItem('userId');
+        
+        if (loggedIn && currentUserId) {
+          setUserId(currentUserId);
+          setIsAuthenticated(true);
+        } else if (loggedIn && !currentUserId) {
+          // User is logged in but no ID - set one
+          login();
+        } else {
+          // Not logged in
+          setIsAuthenticated(false);
+          setUserId('');
+        }
       } catch (error) {
         console.error("Auth check failed:", error);
         setIsAuthenticated(false);
@@ -44,11 +105,11 @@ function useAuth() {
     checkAuth();
   }, []);
 
-  return { isAuthenticated, isLoading };
+  return { isAuthenticated, isLoading, userId, login, logout };
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, userId, login, logout } = useAuth();
   const [, navigate] = useLocation();
 
   // If still loading auth status, show nothing (or a loading spinner)

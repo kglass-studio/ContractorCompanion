@@ -1,5 +1,11 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Function to get the current user ID from localStorage
+const getUserId = (): string => {
+  const userId = localStorage.getItem('userId');
+  return userId || 'default-user';
+};
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -12,9 +18,9 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Create headers with authentication
+  // Create headers with authenticated user ID
   const headers: Record<string, string> = {
-    "x-user-id": "default-user" // Use default user ID for authentication
+    "x-user-id": getUserId() // Use the authenticated user's ID
   };
   
   // Add content type for requests with data
@@ -42,7 +48,7 @@ export const getQueryFn: <T>(options: {
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
       headers: {
-        "x-user-id": "default-user" // Add user ID for authentication on GET requests
+        "x-user-id": getUserId() // Use the authenticated user's ID
       }
     });
 
