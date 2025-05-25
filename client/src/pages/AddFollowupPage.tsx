@@ -54,10 +54,11 @@ export default function AddFollowupPage() {
       const { scheduledDate, scheduledTime, action } = values;
       const dateTime = new Date(`${scheduledDate}T${scheduledTime}`);
       
+      // Create the followup with stringified date that the server expects
       await createFollowup.mutateAsync({
         clientId: client.id,
         action,
-        scheduledDate: dateTime,
+        scheduledDate: dateTime.toISOString(),
         isCompleted: false,
         reminder: true,
       });
