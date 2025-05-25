@@ -119,8 +119,14 @@ export default function AddClientForm() {
         });
       }
       
-      // Invalidate queries
+      // Force refresh of client data
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/counts"] });
+      
+      // Add a slight delay to ensure data is refreshed properly
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/clients"] });
+      }, 500);
       
       toast({
         title: "Client created",
