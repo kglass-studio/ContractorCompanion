@@ -62,6 +62,7 @@ export function AddNoteWithPhoto({ clientId }: AddNoteWithPhotoProps) {
       const formData = new FormData();
       formData.append("photo", file);
 
+      // Fixed upload endpoint path
       const response = await fetch("/api/uploads/photos", {
         method: "POST",
         body: formData,
