@@ -49,22 +49,30 @@ const initDatabase = async () => {
   try {
     if (process.env.DATABASE_URL) {
       try {
-        // Create a connection pool with Supabase-specific configuration
+        // Log connection attempt (without sensitive details)
+        log("Attempting to connect to Supabase Transaction pooler...", "database");
+        
+        // Create a connection pool optimized for Supabase Transaction pooler
         pool = new Pool({
           connectionString: process.env.DATABASE_URL,
-          ssl: true, // Required for Supabase
-          max: 20, // Set maximum connection pool size
-          idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-          connectionTimeoutMillis: 5000, // Connection timeout after 5 seconds
+          ssl: {
+            rejectUnauthorized: false  // Required for Supabase connections
+          },
+          max: 10,                     // Maximum number of clients in the pool
+          idleTimeoutMillis: 30000,    // How long a client is allowed to remain idle before being closed
+          connectionTimeoutMillis: 10000, // How long to wait for a connection
+          statement_timeout: 10000,    // Maximum time (ms) any statement can run
         });
         
-        // Test the connection
-        const result = await pool.query('SELECT 1');
+        // Test the connection with a simple query
+        const result = await pool.query('SELECT NOW() as time');
         
         if (result.rows.length > 0) {
+          log(`Successfully connected to Supabase database at: ${result.rows[0].time}`, "database");
+          
           // Create tables if they don't exist
           await createTablesIfNotExist();
-          log("Supabase PostgreSQL connection established successfully", "database");
+          log("Database tables verified/created successfully", "database");
         }
       } catch (dbError) {
         log(`Database connection error: ${dbError}`, "error");
