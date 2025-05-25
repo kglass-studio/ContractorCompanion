@@ -107,9 +107,21 @@ export default function AddClientModal({ open, onOpenChange }: AddClientModalPro
   const onSubmit = async (values: ClientFormValues) => {
     try {
       setIsSubmitting(true);
+      console.log("Starting client creation with values:", values);
       
-      // Create client - userId will be added by the server
-      const client = await createClient({
+      // Validate required fields
+      if (!values.name || !values.phone) {
+        toast({
+          title: "Missing information",
+          description: "Name and phone number are required",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Create a client object with required fields
+      const clientData = {
         name: values.name,
         phone: values.phone,
         email: values.email || "",
@@ -117,8 +129,13 @@ export default function AddClientModal({ open, onOpenChange }: AddClientModalPro
         city: values.city || "",
         state: values.state || "",
         zipCode: values.zipCode || "",
-        status: values.status,
-      });
+        status: values.status || "lead",
+      };
+      
+      console.log("Sending client data to API:", clientData);
+      
+      // Create client - userId will be added by the server
+      const client = await createClient(clientData);
       
       // Create initial note if provided
       if (values.initialNotes) {
@@ -592,8 +609,14 @@ export default function AddClientModal({ open, onOpenChange }: AddClientModalPro
                 </Button>
               ) : (
                 <Button 
-                  type="submit" 
-                  disabled={isSubmitting}
+                  type="button" 
+                  onClick={() => {
+                    console.log("Create client button clicked");
+                    const formValues = form.getValues();
+                    console.log("Form values:", formValues);
+                    onSubmit(formValues);
+                  }}
+                  disabled={isSubmitting || !isStepValid()}
                   className="flex-1 sm:flex-none"
                 >
                   {isSubmitting ? "Creating..." : "Create Client"}
