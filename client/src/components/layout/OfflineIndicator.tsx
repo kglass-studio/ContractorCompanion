@@ -1,10 +1,117 @@
+import { useState, useEffect } from "react";
+import { CloudOffIcon, CloudIcon, RefreshCwIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+
 export default function OfflineIndicator() {
+  const { isOnline, hasPendingChanges, syncChanges } = useOnlineStatus();
+  const [syncing, setSyncing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  // Auto-collapse after a delay
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    
+    if (expanded) {
+      timeout = setTimeout(() => {
+        setExpanded(false);
+      }, 5000);
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [expanded]);
+  
+  // Handle sync button click
+  const handleSync = async () => {
+    if (syncing || !isOnline) return;
+    
+    setSyncing(true);
+    try {
+      await syncChanges();
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  if (isOnline && !hasPendingChanges) {
+    return null;
+  }
+
   return (
-    <div className="bg-amber-100 text-amber-800 text-sm py-1 px-3 flex justify-center items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-      </svg>
-      You're offline. Changes will sync when connection returns.
-    </div>
+    <AnimatePresence>
+      <motion.div 
+        className={`fixed bottom-4 left-4 rounded-lg shadow-lg overflow-hidden z-50 cursor-pointer ${
+          isOnline ? "bg-amber-50 text-amber-900 border border-amber-200" : "bg-red-50 text-red-900 border border-red-200"
+        }`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{ duration: 0.3 }}
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="px-4 py-3 flex items-center">
+          {isOnline ? (
+            <CloudIcon className="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" />
+          ) : (
+            <CloudOffIcon className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+          )}
+          
+          <div className="flex-grow">
+            {isOnline ? (
+              <span className="font-medium">Online with pending changes</span>
+            ) : (
+              <span className="font-medium">You're offline</span>
+            )}
+          </div>
+          
+          {isOnline && hasPendingChanges && (
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="ml-2 h-8 px-2" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSync();
+              }}
+              disabled={syncing}
+            >
+              <RefreshCwIcon className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing..." : "Sync now"}
+            </Button>
+          )}
+        </div>
+        
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="px-4 py-2 bg-white/50 border-t border-gray-100 text-sm"
+            >
+              {isOnline ? (
+                <div>
+                  <p>You have changes that need to be synchronized to the server.</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Click "Sync now" to upload your changes or they'll sync automatically when the connection is stable.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p>Your changes are being saved locally and will sync when you're back online.</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    You can continue working as normal. All your data is safely stored on your device.
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </AnimatePresence>
   );
 }

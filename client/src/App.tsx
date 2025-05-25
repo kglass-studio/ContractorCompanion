@@ -15,6 +15,7 @@ import SignupPage from "@/pages/SignupPage";
 import PaymentPage from "@/pages/PaymentPage";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { useState, useEffect } from "react";
+import { OnlineStatusProvider } from "@/hooks/useOnlineStatus";
 
 // Simple auth check (this would be replaced with a real auth system)
 function useAuth() {
@@ -89,9 +90,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <MobileLayout>
-          <Router />
-        </MobileLayout>
+        <OnlineStatusProvider>
+          <MobileLayout>
+            <Router />
+          </MobileLayout>
+        </OnlineStatusProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
