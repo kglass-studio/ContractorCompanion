@@ -24,6 +24,7 @@ export type JobStatusType = typeof JobStatus[keyof typeof JobStatus];
 // Client table
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id", { length: 50 }).notNull(), // Add userId to associate clients with specific users
   name: varchar("name", { length: 100 }).notNull(),
   phone: varchar("phone", { length: 20 }).notNull(),
   email: varchar("email", { length: 100 }),

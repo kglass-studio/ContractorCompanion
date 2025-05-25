@@ -14,28 +14,28 @@ import { log } from "./vite";
 
 export interface IStorage {
   // Clients
-  getClients(): Promise<Client[]>;
-  getClientsByStatus(status: string): Promise<Client[]>;
-  getClient(id: number): Promise<Client | undefined>;
+  getClients(userId: string): Promise<Client[]>;
+  getClientsByStatus(userId: string, status: string): Promise<Client[]>;
+  getClient(userId: string, id: number): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
-  updateClient(id: number, client: Partial<Client>): Promise<Client | undefined>;
-  deleteClient(id: number): Promise<boolean>;
+  updateClient(userId: string, id: number, client: Partial<Client>): Promise<Client | undefined>;
+  deleteClient(userId: string, id: number): Promise<boolean>;
 
   // Notes
-  getNotes(clientId: number): Promise<Note[]>;
-  getNote(id: number): Promise<Note | undefined>;
-  createNote(note: InsertNote): Promise<Note>;
-  deleteNote(id: number): Promise<boolean>;
+  getNotes(userId: string, clientId: number): Promise<Note[]>;
+  getNote(userId: string, id: number): Promise<Note | undefined>;
+  createNote(userId: string, note: InsertNote): Promise<Note>;
+  deleteNote(userId: string, id: number): Promise<boolean>;
 
   // Followups
-  getFollowups(): Promise<Followup[]>;
-  getFollowupsByClient(clientId: number): Promise<Followup[]>;
-  getTodaysFollowups(): Promise<Followup[]>;
-  getFollowup(id: number): Promise<Followup | undefined>;
-  createFollowup(followup: InsertFollowup): Promise<Followup>;
-  updateFollowup(id: number, followup: Partial<Followup>): Promise<Followup | undefined>;
-  completeFollowup(id: number): Promise<Followup | undefined>;
-  deleteFollowup(id: number): Promise<boolean>;
+  getFollowups(userId: string): Promise<Followup[]>;
+  getFollowupsByClient(userId: string, clientId: number): Promise<Followup[]>;
+  getTodaysFollowups(userId: string): Promise<Followup[]>;
+  getFollowup(userId: string, id: number): Promise<Followup | undefined>;
+  createFollowup(userId: string, followup: InsertFollowup): Promise<Followup>;
+  updateFollowup(userId: string, id: number, followup: Partial<Followup>): Promise<Followup | undefined>;
+  completeFollowup(userId: string, id: number): Promise<Followup | undefined>;
+  deleteFollowup(userId: string, id: number): Promise<boolean>;
 }
 
 // Import required database packages
@@ -852,7 +852,32 @@ export class MemStorage implements IStorage {
     this.clientId = 1;
     this.noteId = 1;
     this.followupId = 1;
+    
+    // Add test data if needed
+    // this.addSampleData();
   }
+  
+  // For testing purposes only - adds sample data with userId
+  /*
+  private addSampleData() {
+    // Example client with userId
+    const client: Client = {
+      id: this.clientId++,
+      userId: "test-user-1",
+      name: "John Doe",
+      phone: "555-123-4567",
+      email: "john@example.com",
+      addressLine1: "123 Main St",
+      city: "Anytown",
+      state: "CA",
+      zipCode: "90210",
+      status: JobStatus.LEAD,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.clients.set(client.id, client);
+  }
+  */
 
   // Client methods
   async getClients(): Promise<Client[]> {
