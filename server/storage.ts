@@ -14,7 +14,7 @@ import { log } from "./vite";
 
 export interface IStorage {
   // Clients
-  getClients(userId: string): Promise<Client[]>;
+  getClients(userId: string | null): Promise<Client[]>;
   getClientsByStatus(userId: string, status: string): Promise<Client[]>;
   getClient(userId: string, id: number): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
@@ -895,8 +895,16 @@ export class MemStorage implements IStorage {
   }
 
   // Client methods with user isolation
-  async getClients(userId: string): Promise<Client[]> {
-    return Array.from(this.clients.values())
+  async getClients(userId: string | null): Promise<Client[]> {
+    // If userId is null, return all clients (admin mode)
+    const allClients = Array.from(this.clients.values());
+    
+    if (userId === null) {
+      return allClients;
+    }
+    
+    // Otherwise filter by the specified userId
+    return allClients
       .filter(client => client.userId === userId)
       .sort((a, b) => {
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();

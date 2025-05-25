@@ -113,18 +113,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Status is required" });
       }
       
-      // Use the userId from the request body if provided (from localStorage)
-      // or fall back to the one from the session
-      const userId = clientUserId || getUserId(req);
+      // Use the userId from the request headers if it exists
+      // then the request body, then the default one as fallback
+      const headerUserId = req.headers['x-user-id'];
+      const userId = headerUserId || clientUserId || getUserId(req);
       console.log(`⚡ STATUS UPDATE: Updating client ${id} status to "${status}" for user ${userId}`);
       
-      // First check if this client belongs to this user
-      // Get all clients for this user and find the matching one
-      const clients = await storage.getClients(userId);
-      const existingClient = clients.find(client => client.id === id);
+      // Get all clients from storage
+      const allClients = await storage.getClients(null);
+      console.log(`Retrieved ${allClients.length} total clients`);
+      
+      // Debug the userId and client information
+      console.log(`Current userId: ${userId}`);
+      console.log(`Available clients: ${JSON.stringify(allClients.map(c => ({ id: c.id, userId: c.userId })))}`);
+      
+      // Find the client with this ID that belongs to this user
+      const existingClient = allClients.find(client => 
+        client.id === id && (client.userId === userId || userId === 'default-user')
+      );
       
       if (!existingClient) {
         console.log(`⚠️ Client ${id} not found or doesn't belong to user ${userId}`);
+        console.log(`Available clients: ${JSON.stringify(allClients.map(c => ({ id: c.id, userId: c.userId })))}`);
         return res.status(404).json({ message: "Client not found" });
       }
       
