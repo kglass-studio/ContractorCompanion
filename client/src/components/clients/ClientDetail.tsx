@@ -55,14 +55,25 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
 
   const handleUpdateStatus = async (newStatus: string) => {
     try {
+      console.log("Updating client status to:", newStatus);
       setUpdatingStatus(true);
-      await updateClient(client.id, { status: newStatus as any });
+      
+      // Make the API call to update the client status
+      const updatedClient = await updateClient(client.id, { status: newStatus });
+      console.log("Client status update response:", updatedClient);
+      
+      // Force refresh client data
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/counts"] });
+      
+      // Show success message
       toast({
         title: "Status updated",
         description: `Client status has been updated to ${newStatus}`,
       });
     } catch (error) {
+      console.error("Error updating client status:", error);
       toast({
         title: "Error",
         description: "Failed to update client status",
@@ -215,11 +226,11 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
                   <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={JobStatus.LEAD}>Lead</SelectItem>
-                  <SelectItem value={JobStatus.QUOTED}>Quoted</SelectItem>
-                  <SelectItem value={JobStatus.SCHEDULED}>Scheduled</SelectItem>
-                  <SelectItem value={JobStatus.COMPLETED}>Completed</SelectItem>
-                  <SelectItem value={JobStatus.PAID}>Paid</SelectItem>
+                  <SelectItem value="lead">Lead</SelectItem>
+                  <SelectItem value="quoted">Quoted</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
                 </SelectContent>
               </Select>
             </div>

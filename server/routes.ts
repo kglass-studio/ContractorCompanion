@@ -109,6 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get the user ID for security check
       const userId = getUserId(req);
+      console.log(`Updating client ${id} for user ${userId}`, req.body);
       
       // First check if this client belongs to this user
       const existingClient = await storage.getClient(userId, id);
@@ -118,10 +119,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // User owns this client, proceed with update
       const clientData = insertClientSchema.partial().parse(req.body);
-      const client = await storage.updateClient(userId, id, clientData);
+      console.log("Validated client update data:", clientData);
       
+      const client = await storage.updateClient(userId, id, clientData);
+      console.log("Client updated:", client);
+      
+      // Return the updated client data
       res.json(client);
     } catch (error) {
+      console.error("Error updating client:", error);
       if (error instanceof z.ZodError) {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: validationError.message });

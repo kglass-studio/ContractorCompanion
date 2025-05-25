@@ -36,8 +36,16 @@ export async function createClient(client: Omit<InsertClient, 'userId'>): Promis
 }
 
 export async function updateClient(id: number, client: Partial<Client>): Promise<Client> {
-  const res = await apiRequest("PUT", `/api/clients/${id}`, client);
-  return res.json();
+  console.log(`Updating client ${id} with data:`, client);
+  try {
+    const res = await apiRequest("PUT", `/api/clients/${id}`, client);
+    const data = await res.json();
+    console.log("Client update response:", data);
+    return data;
+  } catch (error) {
+    console.error("Error in updateClient API call:", error);
+    throw error;
+  }
 }
 
 export async function deleteClient(id: number): Promise<void> {
