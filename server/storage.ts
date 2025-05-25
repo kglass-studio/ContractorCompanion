@@ -879,23 +879,30 @@ export class MemStorage implements IStorage {
   }
   */
 
-  // Client methods
-  async getClients(): Promise<Client[]> {
-    return Array.from(this.clients.values()).sort((a, b) => {
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
-  }
-
-  async getClientsByStatus(status: string): Promise<Client[]> {
+  // Client methods with user isolation
+  async getClients(userId: string): Promise<Client[]> {
     return Array.from(this.clients.values())
-      .filter((client) => client.status === status)
+      .filter(client => client.userId === userId)
       .sort((a, b) => {
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
       });
   }
 
-  async getClient(id: number): Promise<Client | undefined> {
-    return this.clients.get(id);
+  async getClientsByStatus(userId: string, status: string): Promise<Client[]> {
+    return Array.from(this.clients.values())
+      .filter((client) => client.userId === userId && client.status === status)
+      .sort((a, b) => {
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
+  }
+
+  async getClient(userId: string, id: number): Promise<Client | undefined> {
+    const client = this.clients.get(id);
+    // Only return the client if it belongs to this user
+    if (client && client.userId === userId) {
+      return client;
+    }
+    return undefined;
   }
 
   async createClient(insertClient: InsertClient): Promise<Client> {

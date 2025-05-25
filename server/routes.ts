@@ -26,15 +26,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   const apiRouter = express.Router();
   
-  // Clients endpoints
+  // Helper function to get user ID from session or request
+  const getUserId = (req: Request): string => {
+    // In a real app, this would come from authenticated session
+    // For now, we'll use a value from the headers or query
+    // This is just a temporary solution until we implement proper auth
+    const userId = req.headers['x-user-id'] || 
+                  req.query.userId || 
+                  'default-user';
+    return userId as string;
+  };
+
+  // Clients endpoints with user isolation
   apiRouter.get("/clients", async (req: Request, res: Response) => {
     const status = req.query.status as string | undefined;
+    const userId = getUserId(req);
+    
     try {
       if (status) {
-        const clients = await storage.getClientsByStatus(status);
+        const clients = await storage.getClientsByStatus(userId, status);
         res.json(clients);
       } else {
-        const clients = await storage.getClients();
+        const clients = await storage.getClients(userId);
         res.json(clients);
       }
     } catch (error) {
@@ -45,11 +58,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.get("/clients/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = getUserId(req);
+      
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid client ID" });
       }
 
-      const client = await storage.getClient(id);
+      const client = await storage.getClient(userId, id);
       if (!client) {
         return res.status(404).json({ message: "Client not found" });
       }
@@ -63,7 +78,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.post("/clients", async (req: Request, res: Response) => {
     try {
       console.log("Client creation request received:", req.body);
-      const clientData = insertClientSchema.parse(req.body);
+      
+      // Get the user ID from the authenticated session or request
+      const userId = getUserId(req);
+      
+      // Prepare client data with user ID
+      const rawClientData = { ...req.body, userId };
+      const clientData = insertClientSchema.parse(rawClientData);
+      
       console.log("Validated client data:", clientData);
       const client = await storage.createClient(clientData);
       console.log("Client created:", client);
