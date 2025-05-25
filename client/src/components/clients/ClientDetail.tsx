@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
+import { ClientNotes } from "@/components/notes/ClientNotes";
 
 interface ClientDetailProps {
   clientId: number;
@@ -255,50 +256,10 @@ export default function ClientDetail({ clientId }: ClientDetailProps) {
           </div>
         </div>
 
-        {/* Job Notes */}
+        {/* Job Notes & Photos */}
         <div className="bg-white rounded-lg shadow mb-4">
           <div className="p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold">Job Notes</h3>
-              <button 
-                className="text-sm text-primary flex items-center gap-1" 
-                onClick={() => navigate(`/clients/${client.id}/notes/add`)}
-              >
-                <PlusIcon size={16} /> Add Note
-              </button>
-            </div>
-            
-            <div className="space-y-3">
-              {isNotesLoading ? (
-                [1, 2].map((i) => (
-                  <Skeleton key={i} className="h-24 w-full mb-3" />
-                ))
-              ) : notes && notes.length > 0 ? (
-                notes.map((note) => (
-                  <div key={note.id} className="border-b pb-3">
-                    <div className="flex justify-between text-sm text-gray-500 mb-1">
-                      <span>{format(new Date(note.createdAt), "PPP 'at' p")}</span>
-                      <button>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                        </svg>
-                      </button>
-                    </div>
-                    <p>{note.text}</p>
-                    
-                    {note.photoUrl && (
-                      <div className="mt-2">
-                        <img src={note.photoUrl} alt="Job photo" className="rounded-md w-full h-auto" />
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="text-gray-500 text-sm p-3 bg-gray-50 rounded-md">
-                  No notes added yet.
-                </div>
-              )}
-            </div>
+            <ClientNotes clientId={client.id} />
           </div>
         </div>
       </div>
