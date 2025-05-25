@@ -49,10 +49,13 @@ const initDatabase = async () => {
   try {
     if (process.env.DATABASE_URL) {
       try {
-        // Create a connection pool
+        // Create a connection pool with Supabase-specific configuration
         pool = new Pool({
           connectionString: process.env.DATABASE_URL,
-          ssl: { rejectUnauthorized: false }
+          ssl: true, // Required for Supabase
+          max: 20, // Set maximum connection pool size
+          idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+          connectionTimeoutMillis: 5000, // Connection timeout after 5 seconds
         });
         
         // Test the connection
@@ -61,7 +64,7 @@ const initDatabase = async () => {
         if (result.rows.length > 0) {
           // Create tables if they don't exist
           await createTablesIfNotExist();
-          log("PostgreSQL database connection established successfully", "database");
+          log("Supabase PostgreSQL connection established successfully", "database");
         }
       } catch (dbError) {
         log(`Database connection error: ${dbError}`, "error");
