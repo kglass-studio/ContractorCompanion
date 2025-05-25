@@ -12,9 +12,19 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Create headers with authentication
+  const headers: Record<string, string> = {
+    "x-user-id": "default-user" // Use default user ID for authentication
+  };
+  
+  // Add content type for requests with data
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -31,6 +41,9 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers: {
+        "x-user-id": "default-user" // Add user ID for authentication on GET requests
+      }
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
