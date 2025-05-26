@@ -84,12 +84,18 @@ export default function SignupPage() {
       
       // Store registered users in a local database
       const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      
+      // Special handling for Kathy's test account - upgrade to unlimited
+      const finalPlan = (values.email === 'odrisck@gmail.com' && values.name === 'Kathy Testacct') 
+        ? 'unlimited' 
+        : selectedPlan;
+      
       registeredUsers.push({
         id: userId,
         email: values.email,
         name: values.name,
         password: values.password, // In a real app, this would be hashed
-        plan: selectedPlan,
+        plan: finalPlan,
         createdAt: new Date().toISOString()
       });
       localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));

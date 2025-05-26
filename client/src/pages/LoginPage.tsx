@@ -70,7 +70,22 @@ export default function LoginPage() {
       localStorage.setItem('userId', user.id);
       localStorage.setItem('userEmail', user.email);
       localStorage.setItem('userName', user.name);
-      localStorage.setItem('userPlan', user.plan);
+      
+      // Special handling for Kathy's test account - ensure unlimited plan
+      const finalPlan = (user.email === 'odrisck@gmail.com' && user.name === 'Kathy Testacct') 
+        ? 'unlimited' 
+        : user.plan;
+      localStorage.setItem('userPlan', finalPlan);
+      
+      // Update Kathy's plan in the registered users list if needed
+      if (user.email === 'odrisck@gmail.com' && user.name === 'Kathy Testacct' && user.plan !== 'unlimited') {
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        const userIndex = registeredUsers.findIndex((u: any) => u.email === user.email);
+        if (userIndex !== -1) {
+          registeredUsers[userIndex].plan = 'unlimited';
+          localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+        }
+      }
 
       // Show success message
       toast({
