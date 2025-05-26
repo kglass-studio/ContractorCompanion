@@ -621,45 +621,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Dashboard counts - use the same successful pattern as the client list
+  // Dashboard counts
   apiRouter.get("/dashboard/counts", async (req: Request, res: Response) => {
     try {
       const userId = getUserId(req);
-      console.log("Dashboard counts requested for user:", userId);
       
-      // Make a direct call to the clients endpoint internally to get the working data
-      const clientsResponse = await new Promise((resolve) => {
-        const mockReq = { ...req, url: '/api/clients' } as Request;
-        const mockRes = {
-          json: (data: any) => resolve(data),
-          status: () => mockRes,
-        } as any;
+      // Prevent caching
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
+      // Use the exact same conditional logic as the clients endpoint
+      if (req.query.status) {
+        // This path shouldn't be called for dashboard counts, but keeping consistency
+        const clients = await storage.getClientsByStatus(userId, req.query.status as string);
+        const counts = {
+          leads: clients.filter(c => c.status === "lead").length,
+          quoted: clients.filter(c => c.status === "quoted").length,
+          scheduled: clients.filter(c => c.status === "scheduled").length,
+          completed: clients.filter(c => c.status === "completed").length,
+          paid: clients.filter(c => c.status === "paid").length
+        };
+        res.json(counts);
+      } else {
+        // This is the main path - use identical logic to line 50 in clients endpoint
+        const clients = await storage.getClients(userId);
         
-        // Use the exact same logic as the working clients endpoint
-        storage.getClients(userId).then(clients => {
-          const counts = {
-            leads: clients.filter(c => c.status === "lead").length,
-            quoted: clients.filter(c => c.status === "quoted").length,
-            scheduled: clients.filter(c => c.status === "scheduled").length,
-            completed: clients.filter(c => c.status === "completed").length,
-            paid: clients.filter(c => c.status === "paid").length
-          };
-          console.log("Calculated dashboard counts:", counts);
-          console.log("From clients:", clients.map(c => ({ name: c.name, status: c.status })));
-          resolve(counts);
-        }).catch(err => {
-          console.error("Error in dashboard counts:", err);
-          resolve({
-            leads: 0,
-            quoted: 0,
-            scheduled: 0,
-            completed: 0,
-            paid: 0
-          });
-        });
-      });
-      
-      res.json(clientsResponse);
+        // Count by status using the same approach
+        const counts = {
+          leads: clients.filter(c => c.status === "lead").length,
+          quoted: clients.filter(c => c.status === "quoted").length,
+          scheduled: clients.filter(c => c.status === "scheduled").length,
+          completed: clients.filter(c => c.status === "completed").length,
+          paid: clients.filter(c => c.status === "paid").length
+        };
+        
+        res.json(counts);
+      }
     } catch (error) {
       console.error("Error fetching dashboard counts:", error);
       res.status(500).json({ message: "Failed to fetch dashboard counts" });
