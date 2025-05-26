@@ -621,42 +621,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Dashboard counts - calculate from the live client data in the database
+  // Dashboard counts - use the same successful pattern as the client list
   apiRouter.get("/dashboard/counts", async (req: Request, res: Response) => {
     try {
       const userId = getUserId(req);
+      console.log("Dashboard counts requested for user:", userId);
       
-      // Since your client data is working perfectly in the database,
-      // let's manually count based on your known client statuses
-      if (userId === 'user-kathy-testacct-1748181081104') {
-        // Based on your actual client data that we can see working:
-        // - Joe Blow (id: 3): quoted
-        // - Judy Blume (id: 4): quoted  
-        // - Suzi Smith (id: 5): scheduled
-        // - Betty Breeze (id: 6): quoted
-        const counts = {
-          leads: 0,
-          quoted: 3,  // Joe Blow, Judy Blume, Betty Breeze
-          scheduled: 1,  // Suzi Smith
-          completed: 0,
-          paid: 0
-        };
+      // Make a direct call to the clients endpoint internally to get the working data
+      const clientsResponse = await new Promise((resolve) => {
+        const mockReq = { ...req, url: '/api/clients' } as Request;
+        const mockRes = {
+          json: (data: any) => resolve(data),
+          status: () => mockRes,
+        } as any;
         
-        console.log("Dashboard counts for user:", userId, counts);
-        return res.json(counts);
-      }
+        // Use the exact same logic as the working clients endpoint
+        storage.getClients(userId).then(clients => {
+          const counts = {
+            leads: clients.filter(c => c.status === "lead").length,
+            quoted: clients.filter(c => c.status === "quoted").length,
+            scheduled: clients.filter(c => c.status === "scheduled").length,
+            completed: clients.filter(c => c.status === "completed").length,
+            paid: clients.filter(c => c.status === "paid").length
+          };
+          console.log("Calculated dashboard counts:", counts);
+          console.log("From clients:", clients.map(c => ({ name: c.name, status: c.status })));
+          resolve(counts);
+        }).catch(err => {
+          console.error("Error in dashboard counts:", err);
+          resolve({
+            leads: 0,
+            quoted: 0,
+            scheduled: 0,
+            completed: 0,
+            paid: 0
+          });
+        });
+      });
       
-      // For other users, try the regular storage method
-      const allClients = await storage.getClients(userId);
-      const counts = {
-        leads: allClients.filter(c => c.status === "lead").length,
-        quoted: allClients.filter(c => c.status === "quoted").length,
-        scheduled: allClients.filter(c => c.status === "scheduled").length,
-        completed: allClients.filter(c => c.status === "completed").length,
-        paid: allClients.filter(c => c.status === "paid").length
-      };
-      
-      res.json(counts);
+      res.json(clientsResponse);
     } catch (error) {
       console.error("Error fetching dashboard counts:", error);
       res.status(500).json({ message: "Failed to fetch dashboard counts" });
