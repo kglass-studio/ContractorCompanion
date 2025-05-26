@@ -38,7 +38,18 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const { data: todayFollowups, isLoading: isLoadingFollowups } = useFollowups({ today: true });
   const { data: clients, isLoading: isLoadingClients } = useClients({ limit: 3 });
-  const { data: counts, isLoading: isLoadingCounts } = useDashboardCounts();
+  const { data: allClients } = useClients(); // Get all clients for accurate counts
+  
+  // Calculate counts directly from working client data
+  const counts = allClients ? {
+    leads: allClients.filter(c => c.status === "lead").length,
+    quoted: allClients.filter(c => c.status === "quoted").length,
+    scheduled: allClients.filter(c => c.status === "scheduled").length,
+    completed: allClients.filter(c => c.status === "completed").length,
+    paid: allClients.filter(c => c.status === "paid").length
+  } : null;
+  
+  const isLoadingCounts = !allClients;
   const [showSearch, setShowSearch] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<'free'|'paid'>('free');
   const [clientCount, setClientCount] = useState(0);
