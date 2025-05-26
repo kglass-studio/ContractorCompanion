@@ -160,7 +160,7 @@ export default function Dashboard() {
                 </DropdownMenuItem>
                 
                 {/* Subscription Management */}
-                <DropdownMenuItem onClick={() => navigate("/payment")}>
+                <DropdownMenuItem onClick={() => navigate("/subscription")}>
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Subscription</span>
                 </DropdownMenuItem>
