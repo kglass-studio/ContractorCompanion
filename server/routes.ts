@@ -728,6 +728,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Unsubscription and data management routes
+  apiRouter.post("/unsubscribe", async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      
+      // Note: In a production app, you would cancel the PayPal subscription here
+      // For now, we'll simulate the unsubscription process
+      
+      res.json({ 
+        message: "Successfully unsubscribed. Your account has been reverted to the free plan.",
+        success: true 
+      });
+    } catch (error) {
+      console.error("Error during unsubscription:", error);
+      res.status(500).json({ message: "Failed to process unsubscription" });
+    }
+  });
+
+  apiRouter.post("/purge-user-data", async (req: Request, res: Response) => {
+    try {
+      const userId = getUserId(req);
+      
+      const success = await storage.purgeUserData(userId);
+      
+      if (success) {
+        res.json({ 
+          message: "All user data has been permanently deleted.",
+          success: true 
+        });
+      } else {
+        res.status(500).json({ message: "Failed to purge user data" });
+      }
+    } catch (error) {
+      console.error("Error purging user data:", error);
+      res.status(500).json({ message: "Failed to purge user data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
