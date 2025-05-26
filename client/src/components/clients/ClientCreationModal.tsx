@@ -111,6 +111,7 @@ export default function ClientCreationModal({ open, onOpenChange }: ClientCreati
       setIsSubmitting(true);
       
       console.log("Submitting client:", values);
+      console.log("Photo file selected:", photoFile);
       
       // Create client
       const client = await createClient({
@@ -469,7 +470,10 @@ export default function ClientCreationModal({ open, onOpenChange }: ClientCreati
                         input.accept = 'image/*';
                         input.onchange = (e) => {
                           const file = (e.target as HTMLInputElement).files?.[0];
-                          if (file) setPhotoFile(file);
+                          if (file) {
+                            console.log("Photo selected:", file.name, file.size);
+                            setPhotoFile(file);
+                          }
                         };
                         input.click();
                       }}
