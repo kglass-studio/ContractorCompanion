@@ -47,8 +47,14 @@ export default function Dashboard() {
   // Load subscription status from localStorage
   useEffect(() => {
     const userPlan = localStorage.getItem('userPlan');
-    if (userPlan === 'paid') {
+    console.log("User plan from localStorage:", userPlan);
+    
+    // Check for multiple possible values that indicate paid/unlimited status
+    if (userPlan === 'paid' || userPlan === 'unlimited' || userPlan === 'pro') {
       setSubscriptionPlan('paid');
+      console.log("Setting subscription plan to paid");
+    } else {
+      console.log("Setting subscription plan to free");
     }
     
     // Update client count for plan restriction notifications

@@ -624,11 +624,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard counts
   apiRouter.get("/dashboard/counts", async (req: Request, res: Response) => {
     try {
-      const leads = await storage.getClientsByStatus("lead");
-      const quoted = await storage.getClientsByStatus("quoted");
-      const scheduled = await storage.getClientsByStatus("scheduled");
-      const completed = await storage.getClientsByStatus("completed");
-      const paid = await storage.getClientsByStatus("paid");
+      const userId = getUserId(req);
+      const leads = await storage.getClientsByStatus(userId, "lead");
+      const quoted = await storage.getClientsByStatus(userId, "quoted");
+      const scheduled = await storage.getClientsByStatus(userId, "scheduled");
+      const completed = await storage.getClientsByStatus(userId, "completed");
+      const paid = await storage.getClientsByStatus(userId, "paid");
+      
+      console.log("Dashboard counts for user", userId, ":", {
+        leads: leads.length,
+        quoted: quoted.length,
+        scheduled: scheduled.length,
+        completed: completed.length,
+        paid: paid.length
+      });
       
       res.json({
         leads: leads.length,
@@ -638,6 +647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paid: paid.length
       });
     } catch (error) {
+      console.error("Error fetching dashboard counts:", error);
       res.status(500).json({ message: "Failed to fetch dashboard counts" });
     }
   });
