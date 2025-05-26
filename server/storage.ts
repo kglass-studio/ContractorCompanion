@@ -36,6 +36,9 @@ export interface IStorage {
   updateFollowup(id: number, followup: Partial<Followup>): Promise<Followup | undefined>;
   completeFollowup(id: number): Promise<Followup | undefined>;
   deleteFollowup(id: number): Promise<boolean>;
+
+  // User Management
+  purgeUserData(userId: string): Promise<boolean>;
 }
 
 // Import required database packages
@@ -1105,6 +1108,31 @@ export class MemStorage implements IStorage {
 
   async deleteFollowup(id: number): Promise<boolean> {
     return this.followups.delete(id);
+  }
+
+  async purgeUserData(userId: string): Promise<boolean> {
+    try {
+      // Remove all clients for this user (this will cascade to notes and followups)
+      const userClients = Array.from(this.clients.values()).filter(client => client.userId === userId);
+      
+      userClients.forEach(client => {
+        // Delete all notes for this client
+        const clientNotes = Array.from(this.notes.values()).filter(note => note.clientId === client.id);
+        clientNotes.forEach(note => this.notes.delete(note.id));
+        
+        // Delete all followups for this client
+        const clientFollowups = Array.from(this.followups.values()).filter(followup => followup.clientId === client.id);
+        clientFollowups.forEach(followup => this.followups.delete(followup.id));
+        
+        // Delete the client
+        this.clients.delete(client.id);
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error purging user data:', error);
+      return false;
+    }
   }
 }
 

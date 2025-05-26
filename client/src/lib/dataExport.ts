@@ -69,7 +69,7 @@ export function generateNotesCSV(notes: Record<number, Note[]>, clients: Client[
         clientId,
         `"${clientName}"`,
         note.id.toString(),
-        `"${note.content.replace(/"/g, '""')}"`, // Escape quotes in content
+        `"${note.text.replace(/"/g, '""')}"`, // Escape quotes in content
         note.createdAt ? new Date(note.createdAt).toLocaleDateString() : ''
       ];
       csvRows.push(row.join(','));
@@ -85,8 +85,8 @@ export function generateFollowupsCSV(followups: Record<number, Followup[]>, clie
     'Client ID',
     'Client Name',
     'Followup ID',
-    'Description',
-    'Due Date',
+    'Action',
+    'Scheduled Date',
     'Completed',
     'Created Date'
   ];
@@ -102,9 +102,9 @@ export function generateFollowupsCSV(followups: Record<number, Followup[]>, clie
         clientId,
         `"${clientName}"`,
         followup.id.toString(),
-        `"${followup.description.replace(/"/g, '""')}"`,
-        followup.dueDate ? new Date(followup.dueDate).toLocaleDateString() : '',
-        followup.completed ? 'Yes' : 'No',
+        `"${followup.action.replace(/"/g, '""')}"`,
+        followup.scheduledDate ? new Date(followup.scheduledDate).toLocaleDateString() : '',
+        followup.isCompleted ? 'Yes' : 'No',
         followup.createdAt ? new Date(followup.createdAt).toLocaleDateString() : ''
       ];
       csvRows.push(row.join(','));
