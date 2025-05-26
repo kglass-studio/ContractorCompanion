@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeftIcon, CheckIcon, CreditCardIcon, Crown, AlertCircle, ShieldCheck, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, CreditCardIcon, Crown, AlertCircle, ShieldCheck, XIcon, DownloadIcon, FileTextIcon, DatabaseIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { 
+  exportUserData,
+  generateClientsCSV,
+  generateNotesCSV,
+  generateFollowupsCSV,
+  generateJSONExport,
+  downloadFile,
+  type ExportData
+} from "@/lib/dataExport";
 
 // Animation variants
 const containerVariants = {
