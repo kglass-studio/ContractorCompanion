@@ -61,6 +61,7 @@ interface AddClientModalProps {
 export default function AddClientModal({ open, onOpenChange }: AddClientModalProps) {
   const [step, setStep] = useState(STEPS.BASIC_INFO);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -89,6 +90,7 @@ export default function AddClientModal({ open, onOpenChange }: AddClientModalPro
     if (!open) {
       form.reset();
       setStep(STEPS.BASIC_INFO);
+      setPhotoFile(null);
     }
     onOpenChange(open);
   };
@@ -108,6 +110,7 @@ export default function AddClientModal({ open, onOpenChange }: AddClientModalPro
     try {
       setIsSubmitting(true);
       console.log("Starting client creation with values:", values);
+      console.log("Photo file selected:", photoFile);
       
       // Validate required fields
       if (!values.name || !values.phone) {
@@ -139,9 +142,36 @@ export default function AddClientModal({ open, onOpenChange }: AddClientModalPro
       
       // Create initial note if provided
       if (values.initialNotes) {
+        let photoUrl = null;
+        
+        // Upload photo if one was selected
+        if (photoFile) {
+          try {
+            console.log("Uploading photo...");
+            const formData = new FormData();
+            formData.append("photo", photoFile);
+            
+            const response = await fetch("/api/uploads/photos", {
+              method: "POST",
+              body: formData,
+            });
+            
+            if (response.ok) {
+              const uploadResult = await response.json();
+              photoUrl = uploadResult.url;
+              console.log("Photo uploaded successfully:", photoUrl);
+            } else {
+              console.error("Failed to upload photo");
+            }
+          } catch (error) {
+            console.error("Error uploading photo:", error);
+          }
+        }
+        
         await createNote({
           clientId: client.id,
           text: values.initialNotes,
+          photoUrl,
         });
       }
       
@@ -410,31 +440,69 @@ export default function AddClientModal({ open, onOpenChange }: AddClientModalPro
               <div>
                 <FormLabel className="block text-sm font-medium text-gray-700 mb-1">Add Photo</FormLabel>
                 <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-md p-4">
-                  <label htmlFor="photo-upload" className="flex flex-col items-center text-gray-500 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span className="text-sm">Take or Upload Photo</span>
-                    <input 
-                      id="photo-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Here we would typically upload the file to a server
-                          // and get back a URL to store with the note
-                          // For now, we'll just show a success message
-                          toast({
-                            title: "Photo selected",
-                            description: `File "${file.name}" will be attached to the initial note`,
-                          });
-                        }
+                  {photoFile ? (
+                    <div className="flex flex-col items-center space-y-2">
+                      <img 
+                        src={URL.createObjectURL(photoFile)} 
+                        alt="Selected photo" 
+                        className="w-24 h-24 object-cover rounded-md"
+                      />
+                      <div className="flex space-x-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/*';
+                            input.onchange = (e) => {
+                              const file = (e.target as HTMLInputElement).files?.[0];
+                              if (file) {
+                                console.log("Photo selected:", file.name, file.size);
+                                setPhotoFile(file);
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          Change
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPhotoFile(null)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button 
+                      type="button" 
+                      className="flex flex-col items-center text-gray-500"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            console.log("Photo selected:", file.name, file.size);
+                            setPhotoFile(file);
+                          }
+                        };
+                        input.click();
                       }}
-                    />
-                  </label>
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="text-sm">Take or Upload Photo</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
