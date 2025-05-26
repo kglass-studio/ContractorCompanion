@@ -625,27 +625,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.get("/dashboard/counts", async (req: Request, res: Response) => {
     try {
       const userId = getUserId(req);
-      const leads = await storage.getClientsByStatus(userId, "lead");
-      const quoted = await storage.getClientsByStatus(userId, "quoted");
-      const scheduled = await storage.getClientsByStatus(userId, "scheduled");
-      const completed = await storage.getClientsByStatus(userId, "completed");
-      const paid = await storage.getClientsByStatus(userId, "paid");
+      console.log("Getting dashboard counts for user:", userId);
       
-      console.log("Dashboard counts for user", userId, ":", {
-        leads: leads.length,
-        quoted: quoted.length,
-        scheduled: scheduled.length,
-        completed: completed.length,
-        paid: paid.length
-      });
+      // Get all clients for the user, then count by status
+      const allClients = await storage.getClients(userId);
+      console.log(`Found ${allClients.length} total clients for user ${userId}`);
       
-      res.json({
-        leads: leads.length,
-        quoted: quoted.length,
-        scheduled: scheduled.length,
-        completed: completed.length,
-        paid: paid.length
-      });
+      // Count clients by status
+      const counts = {
+        leads: allClients.filter(c => c.status === "lead").length,
+        quoted: allClients.filter(c => c.status === "quoted").length,
+        scheduled: allClients.filter(c => c.status === "scheduled").length,
+        completed: allClients.filter(c => c.status === "completed").length,
+        paid: allClients.filter(c => c.status === "paid").length
+      };
+      
+      console.log("Dashboard counts calculated:", counts);
+      
+      res.json(counts);
     } catch (error) {
       console.error("Error fetching dashboard counts:", error);
       res.status(500).json({ message: "Failed to fetch dashboard counts" });
