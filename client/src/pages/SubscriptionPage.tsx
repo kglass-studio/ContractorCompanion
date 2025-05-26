@@ -329,7 +329,7 @@ export default function SubscriptionPage() {
                 {/* Photo Uploads */}
                 <div className="text-gray-600">Photo Uploads</div>
                 <div className="text-center">
-                  <XIcon className="h-4 w-4 mx-auto text-gray-400" />
+                  <CheckIcon className="h-4 w-4 mx-auto text-green-500" />
                 </div>
                 <div className="text-center">
                   <CheckIcon className="h-4 w-4 mx-auto text-green-500" />
@@ -338,7 +338,7 @@ export default function SubscriptionPage() {
                 {/* Follow-up Reminders */}
                 <div className="text-gray-600">Follow-up Reminders</div>
                 <div className="text-center">
-                  <XIcon className="h-4 w-4 mx-auto text-gray-400" />
+                  <CheckIcon className="h-4 w-4 mx-auto text-green-500" />
                 </div>
                 <div className="text-center">
                   <CheckIcon className="h-4 w-4 mx-auto text-green-500" />
@@ -356,7 +356,7 @@ export default function SubscriptionPage() {
                 {/* Notifications */}
                 <div className="text-gray-600">Notifications</div>
                 <div className="text-center">
-                  <XIcon className="h-4 w-4 mx-auto text-gray-400" />
+                  <CheckIcon className="h-4 w-4 mx-auto text-green-500" />
                 </div>
                 <div className="text-center">
                   <CheckIcon className="h-4 w-4 mx-auto text-green-500" />

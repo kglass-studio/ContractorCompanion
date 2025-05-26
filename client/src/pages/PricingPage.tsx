@@ -47,13 +47,13 @@ export default function PricingPage() {
     },
     {
       name: "Photo Attachments",
-      free: false,
+      free: true,
       unlimited: true,
       tooltip: "Attach photos to jobs and client records"
     },
     {
       name: "Follow-up Reminders",
-      free: false,
+      free: true,
       unlimited: true,
       tooltip: "Schedule reminders for follow-ups with clients"
     },
@@ -71,7 +71,7 @@ export default function PricingPage() {
     },
     {
       name: "Email & SMS Notifications",
-      free: false,
+      free: true,
       unlimited: true,
       tooltip: "Receive notifications for important events"
     },

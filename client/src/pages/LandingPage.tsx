@@ -214,7 +214,7 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start">
                   <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Basic client management</span>
+                  <span>Complete client management</span>
                 </li>
                 <li className="flex items-start">
                   <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
@@ -222,7 +222,15 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start">
                   <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Mobile friendly</span>
+                  <span>Photo uploads & notes</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                  <span>Follow-up reminders</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                  <span>Notifications</span>
                 </li>
               </ul>
               <div className="mt-8">
@@ -263,19 +271,15 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start">
                   <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Job status tracking</span>
+                  <span>Everything in Free plan</span>
                 </li>
                 <li className="flex items-start">
                   <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Follow-up reminders</span>
+                  <span>Priority support</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Photo attachments</span>
-                </li>
-                <li className="flex items-start">
-                  <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                  <span>Mobile friendly</span>
+                  <span className="text-amber-600 text-sm mr-2 mt-0.5 font-medium">Soon:</span>
+                  <span className="text-gray-600">Calendar & location integration</span>
                 </li>
               </ul>
               <div className="mt-8">
