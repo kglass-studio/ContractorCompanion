@@ -62,9 +62,11 @@ export default function SubscriptionPage() {
   useEffect(() => {
     const storedPlan = localStorage.getItem('userPlan');
     console.log('Current user plan from localStorage:', storedPlan);
+    console.log('Setting userPlan state based on stored plan...');
     
     // Check if user has unlimited plan (could be 'paid' or 'unlimited')
     if (storedPlan === 'paid' || storedPlan === 'unlimited') {
+      console.log('User has unlimited plan, setting userPlan to paid');
       setUserPlan('paid');
       
       // In a real app, we would fetch this from the server
