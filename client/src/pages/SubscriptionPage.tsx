@@ -350,7 +350,7 @@ export default function SubscriptionPage() {
                   <XIcon className="h-4 w-4 mx-auto text-gray-400" />
                 </div>
                 <div className="text-center">
-                  <CheckIcon className="h-4 w-4 mx-auto text-green-500" />
+                  <span className="text-amber-600 text-xs font-medium">Coming Soon</span>
                 </div>
                 
                 {/* Notifications */}
@@ -368,7 +368,7 @@ export default function SubscriptionPage() {
                   <XIcon className="h-4 w-4 mx-auto text-gray-400" />
                 </div>
                 <div className="text-center">
-                  <CheckIcon className="h-4 w-4 mx-auto text-green-500" />
+                  <span className="text-amber-600 text-xs font-medium">Coming Soon</span>
                 </div>
               </div>
             </CardContent>

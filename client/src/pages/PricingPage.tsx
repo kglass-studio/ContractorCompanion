@@ -66,14 +66,20 @@ export default function PricingPage() {
     {
       name: "Calendar Integration",
       free: false,
-      unlimited: true,
-      tooltip: "Sync with your calendar for appointments"
+      unlimited: "Coming Soon",
+      tooltip: "Sync with your calendar for appointments (coming soon)"
     },
     {
       name: "Email & SMS Notifications",
       free: false,
       unlimited: true,
       tooltip: "Receive notifications for important events"
+    },
+    {
+      name: "Location Integration",
+      free: false,
+      unlimited: "Coming Soon",
+      tooltip: "Google Maps integration for client locations (coming soon)"
     },
     {
       name: "Priority Support",
@@ -365,7 +371,9 @@ export default function PricingPage() {
                           <XIcon className="h-5 w-5 text-gray-400 mx-auto" />
                         )
                       ) : (
-                        <span className="font-medium">{feature.unlimited}</span>
+                        <span className={`font-medium ${feature.unlimited === 'Coming Soon' ? 'text-amber-600 text-sm' : ''}`}>
+                          {feature.unlimited}
+                        </span>
                       )}
                     </td>
                   </tr>
