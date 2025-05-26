@@ -160,7 +160,14 @@ export default function Dashboard() {
                 </DropdownMenuItem>
                 
                 {/* Subscription Management */}
-                <DropdownMenuItem onClick={() => navigate("/subscription")}>
+                <DropdownMenuItem onClick={() => {
+                  const userPlan = localStorage.getItem('userPlan');
+                  if (userPlan === 'unlimited' || userPlan === 'paid') {
+                    navigate("/subscription");
+                  } else {
+                    navigate("/payment");
+                  }
+                }}>
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Subscription</span>
                 </DropdownMenuItem>
