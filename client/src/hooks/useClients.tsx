@@ -70,6 +70,10 @@ export function useDashboardCounts() {
   return useQuery({
     queryKey: ["/api/dashboard/counts"],
     queryFn: getDashboardCounts,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache the results
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 }
 
