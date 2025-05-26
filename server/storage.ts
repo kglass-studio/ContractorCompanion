@@ -181,16 +181,17 @@ export class PostgresStorage implements IStorage {
     }
   }
   
-  async getClientsByStatus(status: string): Promise<Client[]> {
+  async getClientsByStatus(userId: string, status: string): Promise<Client[]> {
     try {
       if (!pool) return [];
       
       const result = await pool.query(`
-        SELECT * FROM clients WHERE status = $1 ORDER BY created_at DESC
-      `, [status]);
+        SELECT * FROM clients WHERE user_id = $1 AND status = $2 ORDER BY created_at DESC
+      `, [userId, status]);
       
       return result.rows.map((row) => ({
         id: row.id,
+        userId: row.user_id,
         name: row.name,
         phone: row.phone,
         email: row.email,
@@ -915,11 +916,20 @@ export class MemStorage implements IStorage {
   }
 
   async getClientsByStatus(userId: string, status: string): Promise<Client[]> {
-    return Array.from(this.clients.values())
-      .filter((client) => client.userId === userId && client.status === status)
+    console.log(`Getting clients for userId: ${userId}, status: ${status}`);
+    console.log("Total clients in memory:", this.clients.size);
+    
+    const filteredClients = Array.from(this.clients.values())
+      .filter((client) => {
+        console.log(`Checking client ${client.id}: userId=${client.userId}, status=${client.status}`);
+        return client.userId === userId && client.status === status;
+      })
       .sort((a, b) => {
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        return new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime();
       });
+    
+    console.log(`Found ${filteredClients.length} clients with status ${status} for user ${userId}`);
+    return filteredClients;
   }
 
   async getClient(userId: string, id: number): Promise<Client | undefined> {
