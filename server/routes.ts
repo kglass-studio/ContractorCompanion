@@ -288,58 +288,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //   }
   // });
 
-  apiRouter.delete("/clients/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid client ID" });
-      }
+  // apiRouter.delete("/clients/:id", async (req: Request, res: Response) => {
+  //   try {
+  //     const id = parseInt(req.params.id);
+  //     if (isNaN(id)) {
+  //       return res.status(400).json({ message: "Invalid client ID" });
+  //     }
       
-      // Get the user ID for security check
-      const userId = getUserId(req);
+  //     // Get the user ID for security check
+  //     const userId = getUserId(req);
       
-      // First check if this client belongs to this user
-      const existingClient = await storage.getClient(userId, id);
-      if (!existingClient) {
-        return res.status(404).json({ message: "Client not found" });
-      }
+  //     // First check if this client belongs to this user
+  //     const existingClient = await storage.getClient(userId, id);
+  //     if (!existingClient) {
+  //       return res.status(404).json({ message: "Client not found" });
+  //     }
       
-      // User owns this client, proceed with deletion
-      const success = await storage.deleteClient(userId, id);
-      if (!success) {
-        return res.status(404).json({ message: "Client not found" });
-      }
+  //     // User owns this client, proceed with deletion
+  //     const success = await storage.deleteClient(userId, id);
+  //     if (!success) {
+  //       return res.status(404).json({ message: "Client not found" });
+  //     }
 
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete client" });
-    }
-  });
+  //     res.status(204).send();
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Failed to delete client" });
+  //   }
+  // });
 
   // Notes endpoints with user isolation
-  apiRouter.get("/clients/:clientId/notes", async (req: Request, res: Response) => {
-    try {
-      const clientId = parseInt(req.params.clientId);
-      if (isNaN(clientId)) {
-        return res.status(400).json({ message: "Invalid client ID" });
-      }
+  // apiRouter.get("/clients/:clientId/notes", async (req: Request, res: Response) => {
+  //   try {
+  //     const clientId = parseInt(req.params.clientId);
+  //     if (isNaN(clientId)) {
+  //       return res.status(400).json({ message: "Invalid client ID" });
+  //     }
       
-      // Get user ID for security check
-      const userId = getUserId(req);
+  //     // Get user ID for security check
+  //     const userId = getUserId(req);
       
-      // First verify the client belongs to this user
-      const client = await storage.getClient(userId, clientId);
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
-      }
+  //     // First verify the client belongs to this user
+  //     const client = await storage.getClient(userId, clientId);
+  //     if (!client) {
+  //       return res.status(404).json({ message: "Client not found" });
+  //     }
       
-      // Client belongs to user, proceed with fetching notes
-      const notes = await storage.getNotes(clientId);
-      res.json(notes);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch notes" });
-    }
-  });
+  //     // Client belongs to user, proceed with fetching notes
+  //     const notes = await storage.getNotes(clientId);
+  //     res.json(notes);
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Failed to fetch notes" });
+  //   }
+  // });
 
   // apiRouter.post("/notes", async (req: Request, res: Response) => {
   //   try {
@@ -367,96 +367,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //   }
   // });
 
-  apiRouter.delete("/notes/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid note ID" });
-      }
+  // apiRouter.delete("/notes/:id", async (req: Request, res: Response) => {
+  //   try {
+  //     const id = parseInt(req.params.id);
+  //     if (isNaN(id)) {
+  //       return res.status(400).json({ message: "Invalid note ID" });
+  //     }
       
-      // Get user ID for security check
-      const userId = getUserId(req);
+  //     // Get user ID for security check
+  //     const userId = getUserId(req);
       
-      // Get the note first
-      const note = await storage.getNote(id);
-      if (!note) {
-        return res.status(404).json({ message: "Note not found" });
-      }
+  //     // Get the note first
+  //     const note = await storage.getNote(id);
+  //     if (!note) {
+  //       return res.status(404).json({ message: "Note not found" });
+  //     }
       
-      // Check if note belongs to a client owned by this user
-      const client = await storage.getClient(userId, note.clientId);
-      if (!client) {
-        return res.status(403).json({ message: "Not authorized to delete this note" });
-      }
+  //     // Check if note belongs to a client owned by this user
+  //     const client = await storage.getClient(userId, note.clientId);
+  //     if (!client) {
+  //       return res.status(403).json({ message: "Not authorized to delete this note" });
+  //     }
       
-      // User owns the client, proceed with deletion
-      const success = await storage.deleteNote(id);
-      if (!success) {
-        return res.status(404).json({ message: "Note not found" });
-      }
+  //     // User owns the client, proceed with deletion
+  //     const success = await storage.deleteNote(id);
+  //     if (!success) {
+  //       return res.status(404).json({ message: "Note not found" });
+  //     }
 
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete note" });
-    }
-  });
+  //     res.status(204).send();
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Failed to delete note" });
+  //   }
+  // });
 
   // Followups endpoints with user isolation
-  apiRouter.get("/followups", async (req: Request, res: Response) => {
-    try {
-      // Get user ID for security
-      const userId = getUserId(req);
+  // apiRouter.get("/followups", async (req: Request, res: Response) => {
+  //   try {
+  //     // Get user ID for security
+  //     const userId = getUserId(req);
       
-      const today = req.query.today === "true";
+  //     const today = req.query.today === "true";
       
-      // Get all clients for this user
-      const clientsForUser = await storage.getClients(userId);
-      const clientIds = clientsForUser.map(client => client.id);
+  //     // Get all clients for this user
+  //     const clientsForUser = await storage.getClients(userId);
+  //     const clientIds = clientsForUser.map(client => client.id);
       
-      // If user has no clients, return empty array
-      if (clientIds.length === 0) {
-        return res.json([]);
-      }
+  //     // If user has no clients, return empty array
+  //     if (clientIds.length === 0) {
+  //       return res.json([]);
+  //     }
       
-      // Get followups filtered by user's clients
-      const allFollowups = today
-        ? await storage.getTodaysFollowups()
-        : await storage.getFollowups();
+  //     // Get followups filtered by user's clients
+  //     const allFollowups = today
+  //       ? await storage.getTodaysFollowups()
+  //       : await storage.getFollowups();
         
-      // Filter to only include followups for this user's clients
-      const userFollowups = allFollowups.filter(followup => 
-        clientIds.includes(followup.clientId)
-      );
+  //     // Filter to only include followups for this user's clients
+  //     const userFollowups = allFollowups.filter(followup => 
+  //       clientIds.includes(followup.clientId)
+  //     );
       
-      res.json(userFollowups);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch followups" });
-    }
-  });
+  //     res.json(userFollowups);
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Failed to fetch followups" });
+  //   }
+  // });
 
-  apiRouter.get("/clients/:clientId/followups", async (req: Request, res: Response) => {
-    try {
-      const clientId = parseInt(req.params.clientId);
-      if (isNaN(clientId)) {
-        return res.status(400).json({ message: "Invalid client ID" });
-      }
+  // apiRouter.get("/clients/:clientId/followups", async (req: Request, res: Response) => {
+  //   try {
+  //     const clientId = parseInt(req.params.clientId);
+  //     if (isNaN(clientId)) {
+  //       return res.status(400).json({ message: "Invalid client ID" });
+  //     }
       
-      // Get user ID for security check
-      const userId = getUserId(req);
+  //     // Get user ID for security check
+  //     const userId = getUserId(req);
       
-      // Verify the client belongs to this user
-      const client = await storage.getClient(userId, clientId);
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
-      }
+  //     // Verify the client belongs to this user
+  //     const client = await storage.getClient(userId, clientId);
+  //     if (!client) {
+  //       return res.status(404).json({ message: "Client not found" });
+  //     }
       
-      // Client belongs to user, proceed with fetching followups
-      const followups = await storage.getFollowupsByClient(clientId);
-      res.json(followups);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch followups" });
-    }
-  });
+  //     // Client belongs to user, proceed with fetching followups
+  //     const followups = await storage.getFollowupsByClient(clientId);
+  //     res.json(followups);
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Failed to fetch followups" });
+  //   }
+  // });
 
   // apiRouter.post("/followups", async (req: Request, res: Response) => {
   //   try {
