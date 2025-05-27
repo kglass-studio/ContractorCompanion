@@ -4,7 +4,12 @@
 
 [build.environment]
   NODE_VERSION = "18"
-
+  
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+  
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server/:splat"
