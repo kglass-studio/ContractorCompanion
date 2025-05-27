@@ -20,9 +20,11 @@
   to = "/index.html"
   status = 200
 
-[functions]
-  directory = "netlify/functions"
-
 [[functions]]
   name = "server"
   format = "esm"
+  
+[functions]
+  directory = "netlify/functions"
+
+
