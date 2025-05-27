@@ -17,12 +17,12 @@ import {
   createFollowupCompletionNotification
 } from "./notifications";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
-import { uploadRouter, serveUploads } from "./uploads";
+//import { uploadRouter, serveUploads } from "./uploads";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up file uploads
-  serveUploads(app);
-  app.use("/api/uploads", uploadRouter);
+ // serveUploads(app);
+  //app.use("/api/uploads", uploadRouter);
   
   const apiRouter = express.Router();
   
