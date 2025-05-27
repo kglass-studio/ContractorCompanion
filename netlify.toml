@@ -9,3 +9,4 @@
   from = "/api/*"
   to = "/.netlify/functions/server/:splat"
   status = 200
+  force = true # Let's try forcing the redirect with valid syntax
