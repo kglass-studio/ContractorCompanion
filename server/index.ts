@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 //import { setupVite, serveStatic, log } from "./vite";
 //import { initializeNotificationSystem } from "./notifications";
 // Attempt to force inclusion of the Linux-specific Rollup package
-import '@rollup/rollup-linux-x64-gnu';
+//import '@rollup/rollup-linux-x64-gnu';
 
 const app = express();
 app.use(express.json());
