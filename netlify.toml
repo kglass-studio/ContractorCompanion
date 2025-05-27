@@ -8,4 +8,4 @@
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server/:splat"
-  status = 200
+  status = 200! # The exclamation mark forces the redirect
