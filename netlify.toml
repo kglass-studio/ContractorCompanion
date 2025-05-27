@@ -4,12 +4,12 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  
+
 [[redirects]]
   from = "/assets/*"
   to = "/dist/public/assets/:splat"
   status = 200
-  
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server/:splat"
@@ -20,11 +20,9 @@
   to = "/index.html"
   status = 200
 
-[[functions]]
-  name = "server"
-  format = "esm"
-  
 [functions]
   directory = "netlify/functions"
 
-
+[[functions]]
+  path = "/.netlify/functions/server" # Explicit path
+  format = "esm"
