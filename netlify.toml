@@ -22,9 +22,9 @@
 
 [functions]
   directory = "netlify/functions"
-
-[[functions]]
-  name = "server"
-  bundler = "esbuild"
-  esbuild_target = "es2020" # Or a more recent ECMAScript version
-  external_node_modules = ["serverless-http"] # Explicitly list external modules
+  server = {
+    bundler = "esbuild",
+    esbuild_target = "es2020",
+    external_node_modules = ["serverless-http"],
+    format = "esm"
+  }
