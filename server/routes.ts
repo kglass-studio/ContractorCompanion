@@ -705,7 +705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
    // } catch (error) {
     //  res.status(500).json({ message: "Failed to mark all notifications as read" });
    // }
-  });
+  //});
 
   // Register API routes with /api prefix
  // app.use("/api", apiRouter);
