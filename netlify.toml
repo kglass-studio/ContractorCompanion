@@ -23,8 +23,9 @@
 [functions]
   directory = "netlify/functions"
 
-[functions.server] # Configuration for the 'server' function
+  [functions.server]
     bundler = "esbuild"
     esbuild_target = "es2020"
     external_node_modules = ["serverless-http"]
-    format = "esm"
+    # Explicitly set the esbuild output format to 'esm'
+    esbuild_options = { outfile = "server.js", format = "esm" }
