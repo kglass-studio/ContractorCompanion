@@ -472,197 +472,197 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //     }
       
       // Get user ID for security check
-      const userId = getUserId(req);
+  //     const userId = getUserId(req);
       
-      // Verify the client belongs to this user before creating a followup
-      const client = await storage.getClient(userId, Number(clientId));
-      if (!client) {
-        return res.status(404).json({ message: "Client not found or not authorized" });
-      }
+  //     // Verify the client belongs to this user before creating a followup
+  //     const client = await storage.getClient(userId, Number(clientId));
+  //     if (!client) {
+  //       return res.status(404).json({ message: "Client not found or not authorized" });
+  //     }
       
-      // Convert string date to Date object if it's a string
-      const parsedDate = typeof scheduledDate === 'string' 
-        ? new Date(scheduledDate) 
-        : scheduledDate;
+  //     // Convert string date to Date object if it's a string
+  //     const parsedDate = typeof scheduledDate === 'string' 
+  //       ? new Date(scheduledDate) 
+  //       : scheduledDate;
       
-      // Check if the date is valid
-      if (isNaN(parsedDate.getTime())) {
-        return res.status(400).json({ message: "Invalid date format" });
-      }
+  //     // Check if the date is valid
+  //     if (isNaN(parsedDate.getTime())) {
+  //       return res.status(400).json({ message: "Invalid date format" });
+  //     }
       
-      // Create the data object with the proper format
-      const followupData = {
-        clientId: Number(clientId),
-        action,
-        scheduledDate: parsedDate,
-        isCompleted: isCompleted ?? false,
-        reminder: reminder ?? true
-      };
+  //     // Create the data object with the proper format
+  //     const followupData = {
+  //       clientId: Number(clientId),
+  //       action,
+  //       scheduledDate: parsedDate,
+  //       isCompleted: isCompleted ?? false,
+  //       reminder: reminder ?? true
+  //     };
       
-      const followup = await storage.createFollowup(followupData);
-      res.status(201).json(followup);
-    } catch (error) {
-      console.error("Error creating followup:", error);
-      if (error instanceof z.ZodError) {
-        const validationError = fromZodError(error);
-        return res.status(400).json({ message: validationError.message });
-      }
-      res.status(500).json({ message: "Failed to create followup" });
-    }
-  });
+  //     const followup = await storage.createFollowup(followupData);
+  //     res.status(201).json(followup);
+  //   } catch (error) {
+  //     console.error("Error creating followup:", error);
+  //     if (error instanceof z.ZodError) {
+  //       const validationError = fromZodError(error);
+  //       return res.status(400).json({ message: validationError.message });
+  //     }
+  //     res.status(500).json({ message: "Failed to create followup" });
+  //   }
+  // });
 
-  apiRouter.put("/followups/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid followup ID" });
-      }
+  // apiRouter.put("/followups/:id", async (req: Request, res: Response) => {
+  //   try {
+  //     const id = parseInt(req.params.id);
+  //     if (isNaN(id)) {
+  //       return res.status(400).json({ message: "Invalid followup ID" });
+  //     }
       
-      // Get user ID for security check
-      const userId = getUserId(req);
+  //     // Get user ID for security check
+  //     const userId = getUserId(req);
       
-      // Get the followup
-      const existingFollowup = await storage.getFollowup(id);
-      if (!existingFollowup) {
-        return res.status(404).json({ message: "Followup not found" });
-      }
+  //     // Get the followup
+  //     const existingFollowup = await storage.getFollowup(id);
+  //     if (!existingFollowup) {
+  //       return res.status(404).json({ message: "Followup not found" });
+  //     }
       
-      // Verify the client associated with this followup belongs to this user
-      const client = await storage.getClient(userId, existingFollowup.clientId);
-      if (!client) {
-        return res.status(403).json({ message: "Not authorized to update this followup" });
-      }
+  //     // Verify the client associated with this followup belongs to this user
+  //     const client = await storage.getClient(userId, existingFollowup.clientId);
+  //     if (!client) {
+  //       return res.status(403).json({ message: "Not authorized to update this followup" });
+  //     }
 
-      // User owns the client, proceed with update
-      const followupData = insertFollowupSchema.partial().parse(req.body);
-      const followup = await storage.updateFollowup(id, followupData);
-      if (!followup) {
-        return res.status(404).json({ message: "Followup not found" });
-      }
+  //     // User owns the client, proceed with update
+  //     const followupData = insertFollowupSchema.partial().parse(req.body);
+  //     const followup = await storage.updateFollowup(id, followupData);
+  //     if (!followup) {
+  //       return res.status(404).json({ message: "Followup not found" });
+  //     }
 
-      res.json(followup);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const validationError = fromZodError(error);
-        return res.status(400).json({ message: validationError.message });
-      }
-      res.status(500).json({ message: "Failed to update followup" });
-    }
-  });
+  //     res.json(followup);
+  //   } catch (error) {
+  //     if (error instanceof z.ZodError) {
+  //       const validationError = fromZodError(error);
+  //       return res.status(400).json({ message: validationError.message });
+  //     }
+  //     res.status(500).json({ message: "Failed to update followup" });
+  //   }
+  // });
 
-  apiRouter.put("/followups/:id/complete", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid followup ID" });
-      }
+  // apiRouter.put("/followups/:id/complete", async (req: Request, res: Response) => {
+  //   try {
+  //     const id = parseInt(req.params.id);
+  //     if (isNaN(id)) {
+  //       return res.status(400).json({ message: "Invalid followup ID" });
+  //     }
       
-      // Get user ID for security check
-      const userId = getUserId(req);
+  //     // Get user ID for security check
+  //     const userId = getUserId(req);
       
-      // Get the followup first
-      const existingFollowup = await storage.getFollowup(id);
-      if (!existingFollowup) {
-        return res.status(404).json({ message: "Followup not found" });
-      }
+  //     // Get the followup first
+  //     const existingFollowup = await storage.getFollowup(id);
+  //     if (!existingFollowup) {
+  //       return res.status(404).json({ message: "Followup not found" });
+  //     }
       
-      // Verify the client associated with this followup belongs to this user
-      const client = await storage.getClient(userId, existingFollowup.clientId);
-      if (!client) {
-        return res.status(403).json({ message: "Not authorized to complete this followup" });
-      }
+  //     // Verify the client associated with this followup belongs to this user
+  //     const client = await storage.getClient(userId, existingFollowup.clientId);
+  //     if (!client) {
+  //       return res.status(403).json({ message: "Not authorized to complete this followup" });
+  //     }
       
-      // User owns the client, proceed with completing the followup
-      const followup = await storage.completeFollowup(id);
-      if (!followup) {
-        return res.status(404).json({ message: "Followup not found" });
-      }
+  //     // User owns the client, proceed with completing the followup
+  //     const followup = await storage.completeFollowup(id);
+  //     if (!followup) {
+  //       return res.status(404).json({ message: "Followup not found" });
+  //     }
       
-      // Create a notification when a follow-up is completed
-      createFollowupCompletionNotification(followup, client.name);
+  //     // Create a notification when a follow-up is completed
+  //     createFollowupCompletionNotification(followup, client.name);
 
-      res.json(followup);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to complete followup" });
-    }
-  });
+  //     res.json(followup);
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Failed to complete followup" });
+  //   }
+  // });
 
-  apiRouter.delete("/followups/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid followup ID" });
-      }
+  // apiRouter.delete("/followups/:id", async (req: Request, res: Response) => {
+  //   try {
+  //     const id = parseInt(req.params.id);
+  //     if (isNaN(id)) {
+  //       return res.status(400).json({ message: "Invalid followup ID" });
+  //     }
       
-      // Get user ID for security check
-      const userId = getUserId(req);
+  //     // Get user ID for security check
+  //     const userId = getUserId(req);
       
-      // Get the followup first
-      const existingFollowup = await storage.getFollowup(id);
-      if (!existingFollowup) {
-        return res.status(404).json({ message: "Followup not found" });
-      }
+  //     // Get the followup first
+  //     const existingFollowup = await storage.getFollowup(id);
+  //     if (!existingFollowup) {
+  //       return res.status(404).json({ message: "Followup not found" });
+  //     }
       
-      // Verify the client associated with this followup belongs to this user
-      const client = await storage.getClient(userId, existingFollowup.clientId);
-      if (!client) {
-        return res.status(403).json({ message: "Not authorized to delete this followup" });
-      }
+  //     // Verify the client associated with this followup belongs to this user
+  //     const client = await storage.getClient(userId, existingFollowup.clientId);
+  //     if (!client) {
+  //       return res.status(403).json({ message: "Not authorized to delete this followup" });
+  //     }
       
-      // User owns the client, proceed with deletion
-      const success = await storage.deleteFollowup(id);
-      if (!success) {
-        return res.status(404).json({ message: "Followup not found" });
-      }
+  //     // User owns the client, proceed with deletion
+  //     const success = await storage.deleteFollowup(id);
+  //     if (!success) {
+  //       return res.status(404).json({ message: "Followup not found" });
+  //     }
 
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete followup" });
-    }
-  });
+  //     res.status(204).send();
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Failed to delete followup" });
+  //   }
+  // });
 
   // Dashboard counts
-  apiRouter.get("/dashboard/counts", async (req: Request, res: Response) => {
-    try {
-      const userId = getUserId(req);
+  // apiRouter.get("/dashboard/counts", async (req: Request, res: Response) => {
+  //   try {
+  //     const userId = getUserId(req);
       
-      // Prevent caching
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
+  //     // Prevent caching
+  //     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  //     res.set('Pragma', 'no-cache');
+  //     res.set('Expires', '0');
       
-      // Use the exact same conditional logic as the clients endpoint
-      if (req.query.status) {
-        // This path shouldn't be called for dashboard counts, but keeping consistency
-        const clients = await storage.getClientsByStatus(userId, req.query.status as string);
-        const counts = {
-          leads: clients.filter(c => c.status === "lead").length,
-          quoted: clients.filter(c => c.status === "quoted").length,
-          scheduled: clients.filter(c => c.status === "scheduled").length,
-          completed: clients.filter(c => c.status === "completed").length,
-          paid: clients.filter(c => c.status === "paid").length
-        };
-        res.json(counts);
-      } else {
-        // This is the main path - use identical logic to line 50 in clients endpoint
-        const clients = await storage.getClients(userId);
+  //     // Use the exact same conditional logic as the clients endpoint
+  //     if (req.query.status) {
+  //       // This path shouldn't be called for dashboard counts, but keeping consistency
+  //       const clients = await storage.getClientsByStatus(userId, req.query.status as string);
+  //       const counts = {
+  //         leads: clients.filter(c => c.status === "lead").length,
+  //         quoted: clients.filter(c => c.status === "quoted").length,
+  //         scheduled: clients.filter(c => c.status === "scheduled").length,
+  //         completed: clients.filter(c => c.status === "completed").length,
+  //         paid: clients.filter(c => c.status === "paid").length
+  //       };
+  //       res.json(counts);
+  //     } else {
+  //       // This is the main path - use identical logic to line 50 in clients endpoint
+  //       const clients = await storage.getClients(userId);
         
-        // Count by status using the same approach
-        const counts = {
-          leads: clients.filter(c => c.status === "lead").length,
-          quoted: clients.filter(c => c.status === "quoted").length,
-          scheduled: clients.filter(c => c.status === "scheduled").length,
-          completed: clients.filter(c => c.status === "completed").length,
-          paid: clients.filter(c => c.status === "paid").length
-        };
+  //       // Count by status using the same approach
+  //       const counts = {
+  //         leads: clients.filter(c => c.status === "lead").length,
+  //         quoted: clients.filter(c => c.status === "quoted").length,
+  //         scheduled: clients.filter(c => c.status === "scheduled").length,
+  //         completed: clients.filter(c => c.status === "completed").length,
+  //         paid: clients.filter(c => c.status === "paid").length
+  //       };
         
-        res.json(counts);
-      }
-    } catch (error) {
-      console.error("Error fetching dashboard counts:", error);
-      res.status(500).json({ message: "Failed to fetch dashboard counts" });
-    }
-  });
+  //       res.json(counts);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching dashboard counts:", error);
+  //     res.status(500).json({ message: "Failed to fetch dashboard counts" });
+  //   }
+  // });
 
   // Notification endpoints
   //apiRouter.get("/notifications", async (_req: Request, res: Response) => {
