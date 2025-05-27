@@ -1,11 +1,11 @@
 import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, MemStorage } from "./storage";
-import {
-  insertClientSchema,
-  insertNoteSchema,
-  insertFollowupSchema,
-} from "@shared/schema";
+//import {
+ // insertClientSchema,
+ // insertNoteSchema,
+ // insertFollowupSchema,
+//} from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 //import {
@@ -75,218 +75,218 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.post("/clients", async (req: Request, res: Response) => {
-    try {
-      console.log("Client creation request received:", req.body);
+ // apiRouter.post("/clients", async (req: Request, res: Response) => {
+   // try {
+     // console.log("Client creation request received:", req.body);
       
       // Get the user ID from the authenticated session or request
-      const userId = getUserId(req);
+     // const userId = getUserId(req);
       
       // Prepare client data with user ID
-      const rawClientData = { ...req.body, userId };
-      const clientData = insertClientSchema.parse(rawClientData);
+     // const rawClientData = { ...req.body, userId };
+    //  const clientData = insertClientSchema.parse(rawClientData);
       
-      console.log("Validated client data:", clientData);
-      const client = await storage.createClient(clientData);
-      console.log("Client created:", client);
-      res.status(201).json(client);
-    } catch (error) {
-      console.error("Error creating client:", error);
-      if (error instanceof z.ZodError) {
-        const validationError = fromZodError(error);
-        return res.status(400).json({ message: validationError.message });
-      }
-      res.status(500).json({ message: "Failed to create client" });
-    }
-  });
+     // console.log("Validated client data:", clientData);
+     // const client = await storage.createClient(clientData);
+      //console.log("Client created:", client);
+     // res.status(201).json(client);
+   // } catch (error) {
+     // console.error("Error creating client:", error);
+     // if (error instanceof z.ZodError) {
+      //  const validationError = fromZodError(error);
+       // return res.status(400).json({ message: validationError.message });
+     // }
+     // res.status(500).json({ message: "Failed to create client" });
+   // }
+  //});
 
   // Special route just for updating client status
-  apiRouter.post("/clients/:id/update-status", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid client ID" });
-      }
+  // apiRouter.post("/clients/:id/update-status", async (req: Request, res: Response) => {
+  //   try {
+  //     const id = parseInt(req.params.id);
+  //     if (isNaN(id)) {
+  //       return res.status(400).json({ message: "Invalid client ID" });
+  //     }
       
-      const { status, userId: clientUserId } = req.body;
-      if (!status) {
-        return res.status(400).json({ message: "Status is required" });
-      }
+  //     const { status, userId: clientUserId } = req.body;
+  //     if (!status) {
+  //       return res.status(400).json({ message: "Status is required" });
+  //     }
       
       // Use the userId from the request headers if it exists
       // then the request body, then the default one as fallback
-      const headerUserId = req.headers['x-user-id'];
-      const userId = headerUserId || clientUserId || getUserId(req);
-      console.log(`⚡ STATUS UPDATE: Updating client ${id} status to "${status}" for user ${userId}`);
+  //     const headerUserId = req.headers['x-user-id'];
+  //     const userId = headerUserId || clientUserId || getUserId(req);
+  //     console.log(`⚡ STATUS UPDATE: Updating client ${id} status to "${status}" for user ${userId}`);
       
-      // Get all clients from storage
-      const allClients = await storage.getClients(null);
-      console.log(`Retrieved ${allClients.length} total clients`);
+  //     // Get all clients from storage
+  //     const allClients = await storage.getClients(null);
+  //     console.log(`Retrieved ${allClients.length} total clients`);
       
-      // Debug the userId and client information
-      console.log(`Current userId: ${userId}`);
-      console.log(`Available clients: ${JSON.stringify(allClients.map(c => ({ id: c.id, userId: c.userId })))}`);
+  //     // Debug the userId and client information
+  //     console.log(`Current userId: ${userId}`);
+  //     console.log(`Available clients: ${JSON.stringify(allClients.map(c => ({ id: c.id, userId: c.userId })))}`);
       
-      // Find the client with this ID that belongs to this user
-      const existingClient = allClients.find(client => 
-        client.id === id && (client.userId === userId || userId === 'default-user')
-      );
+  //     // Find the client with this ID that belongs to this user
+  //     const existingClient = allClients.find(client => 
+  //       client.id === id && (client.userId === userId || userId === 'default-user')
+  //     );
       
-      if (!existingClient) {
-        console.log(`⚠️ Client ${id} not found or doesn't belong to user ${userId}`);
-        console.log(`Available clients: ${JSON.stringify(allClients.map(c => ({ id: c.id, userId: c.userId })))}`);
-        return res.status(404).json({ message: "Client not found" });
-      }
+  //     if (!existingClient) {
+  //       console.log(`⚠️ Client ${id} not found or doesn't belong to user ${userId}`);
+  //       console.log(`Available clients: ${JSON.stringify(allClients.map(c => ({ id: c.id, userId: c.userId })))}`);
+  //       return res.status(404).json({ message: "Client not found" });
+  //     }
       
-      // List of valid statuses
-      const validStatuses = ["lead", "quoted", "scheduled", "completed", "paid"];
-      const validStatus = validStatuses.includes(status) ? status : "lead";
+  //     // List of valid statuses
+  //     const validStatuses = ["lead", "quoted", "scheduled", "completed", "paid"];
+  //     const validStatus = validStatuses.includes(status) ? status : "lead";
       
-      console.log(`✅ Found client ${existingClient.name}, changing status from "${existingClient.status}" to "${validStatus}"`);
+  //     console.log(`✅ Found client ${existingClient.name}, changing status from "${existingClient.status}" to "${validStatus}"`);
       
-      // Use our special direct update method if available (added to MemStorage)
-      if (storage instanceof MemStorage && typeof (storage as any).updateClientStatus === 'function') {
-        try {
-          const updatedClient = await (storage as any).updateClientStatus(id, validStatus);
-          if (updatedClient) {
-            console.log(`✅ Client status updated successfully using direct method:`, updatedClient);
-            return res.status(200).json(updatedClient);
-          }
-        } catch (directUpdateErr) {
-          console.error(`⚠️ Error using direct update method:`, directUpdateErr);
-          // Fall through to alternative methods
-        }
-      }
+  //     // Use our special direct update method if available (added to MemStorage)
+  //     if (storage instanceof MemStorage && typeof (storage as any).updateClientStatus === 'function') {
+  //       try {
+  //         const updatedClient = await (storage as any).updateClientStatus(id, validStatus);
+  //         if (updatedClient) {
+  //           console.log(`✅ Client status updated successfully using direct method:`, updatedClient);
+  //           return res.status(200).json(updatedClient);
+  //         }
+  //       } catch (directUpdateErr) {
+  //         console.error(`⚠️ Error using direct update method:`, directUpdateErr);
+  //         // Fall through to alternative methods
+  //       }
+  //     }
       
-      // Try a simple manual update as fallback (in case direct methods fail)
-      if (storage instanceof MemStorage && storage.clients) {
-        const client = storage.clients.get(id);
-        if (client) {
-          // Create updated client object
-          const updatedClient = {
-            ...client,
-            status: validStatus,
-            updatedAt: new Date()
-          };
+  //     // Try a simple manual update as fallback (in case direct methods fail)
+  //     if (storage instanceof MemStorage && storage.clients) {
+  //       const client = storage.clients.get(id);
+  //       if (client) {
+  //         // Create updated client object
+  //         const updatedClient = {
+  //           ...client,
+  //           status: validStatus,
+  //           updatedAt: new Date()
+  //         };
           
-          // Save directly to clients map
-          storage.clients.set(id, updatedClient);
+  //         // Save directly to clients map
+  //         storage.clients.set(id, updatedClient);
           
-          console.log(`✅ Client status updated successfully using manual method`);
-          return res.status(200).json(updatedClient);
-        }
-      }
+  //         console.log(`✅ Client status updated successfully using manual method`);
+  //         return res.status(200).json(updatedClient);
+  //       }
+  //     }
       
-      // Last resort: just return a successful response with the updated client
-      // This ensures UI updates even if storage update fails
-      const updatedClient = {
-        ...existingClient,
-        status: validStatus,
-        updatedAt: new Date()
-      };
+  //     // Last resort: just return a successful response with the updated client
+  //     // This ensures UI updates even if storage update fails
+  //     const updatedClient = {
+  //       ...existingClient,
+  //       status: validStatus,
+  //       updatedAt: new Date()
+  //     };
       
-      console.log(`⚠️ Using fallback response for status update`);
-      return res.status(200).json(updatedClient);
+  //     console.log(`⚠️ Using fallback response for status update`);
+  //     return res.status(200).json(updatedClient);
       
-    } catch (error) {
-      console.error(`❌ Unexpected error in status update:`, error);
-      return res.status(500).json({ message: "Failed to update client status" });
-    }
-  });
+  //   } catch (error) {
+  //     console.error(`❌ Unexpected error in status update:`, error);
+  //     return res.status(500).json({ message: "Failed to update client status" });
+  //   }
+  // });
   
-  apiRouter.put("/clients/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid client ID" });
-      }
+  // apiRouter.put("/clients/:id", async (req: Request, res: Response) => {
+  //   try {
+  //     const id = parseInt(req.params.id);
+  //     if (isNaN(id)) {
+  //       return res.status(400).json({ message: "Invalid client ID" });
+  //     }
       
-      // Get the user ID for security check
-      const userId = getUserId(req);
-      console.log(`Updating client ${id} for user ${userId}`, req.body);
+  //     // Get the user ID for security check
+  //     const userId = getUserId(req);
+  //     console.log(`Updating client ${id} for user ${userId}`, req.body);
       
-      // First check if this client belongs to this user
-      const existingClient = await storage.getClient(userId, id);
-      if (!existingClient) {
-        return res.status(404).json({ message: "Client not found" });
-      }
+  //     // First check if this client belongs to this user
+  //     const existingClient = await storage.getClient(userId, id);
+  //     if (!existingClient) {
+  //       return res.status(404).json({ message: "Client not found" });
+  //     }
       
       // User owns this client, proceed with update
-      const clientData = insertClientSchema.partial().parse(req.body);
-      console.log("Validated client update data:", clientData);
+  //     const clientData = insertClientSchema.partial().parse(req.body);
+  //     console.log("Validated client update data:", clientData);
       
-      try {
-        // First ensure the client exists and belongs to this user
-        const existingClient = await storage.getClient(userId, id);
-        if (!existingClient) {
-          return res.status(404).json({ message: "Client not found" });
-        }
+  //     try {
+  //       // First ensure the client exists and belongs to this user
+  //       const existingClient = await storage.getClient(userId, id);
+  //       if (!existingClient) {
+  //         return res.status(404).json({ message: "Client not found" });
+  //       }
 
-        // Validate client status if it's being updated
-        if (clientData.status) {
-          // List of valid statuses from our schema
-          const validStatuses = ["lead", "quoted", "scheduled", "completed", "paid"];
+  //       // Validate client status if it's being updated
+  //       if (clientData.status) {
+  //         // List of valid statuses from our schema
+  //         const validStatuses = ["lead", "quoted", "scheduled", "completed", "paid"];
           
-          if (!validStatuses.includes(clientData.status)) {
-            // Default to lead for invalid statuses
-            console.log("Invalid status value, defaulting to lead");
-            clientData.status = "lead";
-          }
-        }
+  //         if (!validStatuses.includes(clientData.status)) {
+  //           // Default to lead for invalid statuses
+  //           console.log("Invalid status value, defaulting to lead");
+  //           clientData.status = "lead";
+  //         }
+  //       }
 
-        // Create the updated client object
-        const updatedClient = {
-          ...existingClient,
-          ...clientData,
-          updatedAt: new Date()
-        };
+  //       // Create the updated client object
+  //       const updatedClient = {
+  //         ...existingClient,
+  //         ...clientData,
+  //         updatedAt: new Date()
+  //       };
         
-        // Direct update for in-memory storage
-        if (storage instanceof MemStorage) {
-          // Get the private clients Map from the MemStorage instance
-          const clientsMap = (storage as any).clients;
+  //       // Direct update for in-memory storage
+  //       if (storage instanceof MemStorage) {
+  //         // Get the private clients Map from the MemStorage instance
+  //         const clientsMap = (storage as any).clients;
           
-          if (clientsMap && typeof clientsMap.set === 'function') {
-            // Directly update the client in the Map
-            clientsMap.set(id, updatedClient);
-            console.log("Updated client directly in memory");
+  //         if (clientsMap && typeof clientsMap.set === 'function') {
+  //           // Directly update the client in the Map
+  //           clientsMap.set(id, updatedClient);
+  //           console.log("Updated client directly in memory");
             
-            // Return the updated client data
-            return res.json(updatedClient);
-          }
-        }
+  //           // Return the updated client data
+  //           return res.json(updatedClient);
+  //         }
+  //       }
         
-        // If we couldn't do a direct update, try the standard method
-        console.log("Using standard client update method");
-        try {
-          // Use the direct method with just the id - this matches the actual implementation
-          const result = await storage.updateClient(id, clientData);
+  //       // If we couldn't do a direct update, try the standard method
+  //       console.log("Using standard client update method");
+  //       try {
+  //         // Use the direct method with just the id - this matches the actual implementation
+  //         const result = await storage.updateClient(id, clientData);
           
-          // If the update was successful, serialize and return the updated client
-          if (result) {
-            return res.status(200).json(result);
-          } else {
-            // If no result was returned, use our constructed object
-            return res.status(200).json(updatedClient);
-          }
-        } catch (updateErr) {
-          console.error("Error in storage update:", updateErr);
-          // Even if there's an error, return the updated client to keep the UI in sync
-          return res.status(200).json(updatedClient);
-        }
-      } catch (err) {
-        console.error("Error updating client:", err);
-        return res.status(500).json({ message: "Failed to update client" });
-      }
-    } catch (error) {
-      console.error("Error updating client:", error);
-      if (error instanceof z.ZodError) {
-        const validationError = fromZodError(error);
-        return res.status(400).json({ message: validationError.message });
-      }
-      res.status(500).json({ message: "Failed to update client" });
-    }
-  });
+  //         // If the update was successful, serialize and return the updated client
+  //         if (result) {
+  //           return res.status(200).json(result);
+  //         } else {
+  //           // If no result was returned, use our constructed object
+  //           return res.status(200).json(updatedClient);
+  //         }
+  //       } catch (updateErr) {
+  //         console.error("Error in storage update:", updateErr);
+  //         // Even if there's an error, return the updated client to keep the UI in sync
+  //         return res.status(200).json(updatedClient);
+  //       }
+  //     } catch (err) {
+  //       console.error("Error updating client:", err);
+  //       return res.status(500).json({ message: "Failed to update client" });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating client:", error);
+  //     if (error instanceof z.ZodError) {
+  //       const validationError = fromZodError(error);
+  //       return res.status(400).json({ message: validationError.message });
+  //     }
+  //     res.status(500).json({ message: "Failed to update client" });
+  //   }
+  // });
 
   apiRouter.delete("/clients/:id", async (req: Request, res: Response) => {
     try {
@@ -341,31 +341,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.post("/notes", async (req: Request, res: Response) => {
-    try {
-      // Get user ID for security check
-      const userId = getUserId(req);
+  // apiRouter.post("/notes", async (req: Request, res: Response) => {
+  //   try {
+  //     // Get user ID for security check
+  //     const userId = getUserId(req);
       
-      // Parse note data
-      const noteData = insertNoteSchema.parse(req.body);
+  //     // Parse note data
+  //     const noteData = insertNoteSchema.parse(req.body);
       
-      // Verify the client belongs to this user
-      const client = await storage.getClient(userId, noteData.clientId);
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
-      }
+  //     // Verify the client belongs to this user
+  //     const client = await storage.getClient(userId, noteData.clientId);
+  //     if (!client) {
+  //       return res.status(404).json({ message: "Client not found" });
+  //     }
       
-      // Client belongs to user, proceed with creating note
-      const note = await storage.createNote(noteData);
-      res.status(201).json(note);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const validationError = fromZodError(error);
-        return res.status(400).json({ message: validationError.message });
-      }
-      res.status(500).json({ message: "Failed to create note" });
-    }
-  });
+  //     // Client belongs to user, proceed with creating note
+  //     const note = await storage.createNote(noteData);
+  //     res.status(201).json(note);
+  //   } catch (error) {
+  //     if (error instanceof z.ZodError) {
+  //       const validationError = fromZodError(error);
+  //       return res.status(400).json({ message: validationError.message });
+  //     }
+  //     res.status(500).json({ message: "Failed to create note" });
+  //   }
+  // });
 
   apiRouter.delete("/notes/:id", async (req: Request, res: Response) => {
     try {
@@ -458,18 +458,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.post("/followups", async (req: Request, res: Response) => {
-    try {
-      console.log("Received follow-up data:", req.body);
+  // apiRouter.post("/followups", async (req: Request, res: Response) => {
+  //   try {
+  //     console.log("Received follow-up data:", req.body);
       
-      // Manually validate and transform the data
-      const { clientId, action, scheduledDate, isCompleted, reminder } = req.body;
+  //     // Manually validate and transform the data
+  //     const { clientId, action, scheduledDate, isCompleted, reminder } = req.body;
       
-      if (!clientId || !action || !scheduledDate) {
-        return res.status(400).json({ 
-          message: "Missing required fields: clientId, action, and scheduledDate are required" 
-        });
-      }
+  //     if (!clientId || !action || !scheduledDate) {
+  //       return res.status(400).json({ 
+  //         message: "Missing required fields: clientId, action, and scheduledDate are required" 
+  //       });
+  //     }
       
       // Get user ID for security check
       const userId = getUserId(req);
@@ -751,42 +751,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
  // });
 
   // Unsubscription and data management routes
-  apiRouter.post("/unsubscribe", async (req: Request, res: Response) => {
-    try {
-      const userId = getUserId(req);
+  // apiRouter.post("/unsubscribe", async (req: Request, res: Response) => {
+  //   try {
+  //     const userId = getUserId(req);
       
-      // Note: In a production app, you would cancel the PayPal subscription here
-      // For now, we'll simulate the unsubscription process
+  //     // Note: In a production app, you would cancel the PayPal subscription here
+  //     // For now, we'll simulate the unsubscription process
       
-      res.json({ 
-        message: "Successfully unsubscribed. Your account has been reverted to the free plan.",
-        success: true 
-      });
-    } catch (error) {
-      console.error("Error during unsubscription:", error);
-      res.status(500).json({ message: "Failed to process unsubscription" });
-    }
-  });
+  //     res.json({ 
+  //       message: "Successfully unsubscribed. Your account has been reverted to the free plan.",
+  //       success: true 
+  //     });
+  //   } catch (error) {
+  //     console.error("Error during unsubscription:", error);
+  //     res.status(500).json({ message: "Failed to process unsubscription" });
+  //   }
+  // });
 
-  apiRouter.post("/purge-user-data", async (req: Request, res: Response) => {
-    try {
-      const userId = getUserId(req);
+  // apiRouter.post("/purge-user-data", async (req: Request, res: Response) => {
+  //   try {
+  //     const userId = getUserId(req);
       
-      const success = await storage.purgeUserData(userId);
+  //     const success = await storage.purgeUserData(userId);
       
-      if (success) {
-        res.json({ 
-          message: "All user data has been permanently deleted.",
-          success: true 
-        });
-      } else {
-        res.status(500).json({ message: "Failed to purge user data" });
-      }
-    } catch (error) {
-      console.error("Error purging user data:", error);
-      res.status(500).json({ message: "Failed to purge user data" });
-    }
-  });
+  //     if (success) {
+  //       res.json({ 
+  //         message: "All user data has been permanently deleted.",
+  //         success: true 
+  //       });
+  //     } else {
+  //       res.status(500).json({ message: "Failed to purge user data" });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error purging user data:", error);
+  //     res.status(500).json({ message: "Failed to purge user data" });
+  //   }
+  // });
 
   const httpServer = createServer(app);
   return httpServer;
