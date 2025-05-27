@@ -37,39 +37,31 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  const server = await registerRoutes(app);
-  
-  // Initialize the notification system
-  initializeNotificationSystem();
-  log("Notification system initialized");
+// Call registerRoutes and initializeNotificationSystem directly.
+// These should ideally be synchronous for a serverless function's cold start,
+// or their async operations should be handled internally without top-level await.
+registerRoutes(app);
+initializeNotificationSystem();
+log("Notification system initialized");
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
-  });
+  res.status(status).json({ message });
+  // In serverless, re-throwing might not be ideal; logging is usually sufficient.
+  // For now, let's keep it as is, but be aware.
+  throw err;
+});
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+// Remove the Vite setup for non-development, as serverless functions don't serve static files directly.
+// The frontend is served by Netlify's static hosting.
+// The `serveStatic(app)` part is also not needed for the API function.
+// The `setupVite` part is only for local dev.
+// So, remove the entire `if (app.get("env") === "development") { ... } else { ... }` block.
+// If you need development server functionality, it's separate from the Netlify Function.
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+// Remove the server.listen part entirely, as serverless functions don't listen on ports.
+
+// Export the app instance for serverless-http
+export default app;
