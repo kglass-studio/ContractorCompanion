@@ -22,7 +22,3 @@
 
 [functions]
   directory = "netlify/functions"
-
-[[functions]]
-  path = "/.netlify/functions/server" # Explicit path
-  format = "esm"
