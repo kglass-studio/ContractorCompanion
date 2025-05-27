@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { initializeNotificationSystem } from "./notifications";
+//import { registerRoutes } from "./routes";
+//import { setupVite, serveStatic, log } from "./vite";
+//import { initializeNotificationSystem } from "./notifications";
 // Attempt to force inclusion of the Linux-specific Rollup package
 import '@rollup/rollup-linux-x64-gnu';
 
@@ -32,7 +32,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      //log(logLine);
     }
   });
 
@@ -42,9 +42,9 @@ app.use((req, res, next) => {
 // Call registerRoutes and initializeNotificationSystem directly.
 // These should ideally be synchronous for a serverless function's cold start,
 // or their async operations should be handled internally without top-level await.
-registerRoutes(app);
-initializeNotificationSystem();
-log("Notification system initialized");
+//registerRoutes(app);
+//initializeNotificationSystem();
+//log("Notification system initialized");
 
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const status = err.status || err.statusCode || 500;
@@ -53,7 +53,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ message });
   // In serverless, re-throwing might not be ideal; logging is usually sufficient.
   // For now, let's keep it as is, but be aware.
-  throw err;
+  //throw err;
 });
 
 // Remove the Vite setup for non-development, as serverless functions don't serve static files directly.
