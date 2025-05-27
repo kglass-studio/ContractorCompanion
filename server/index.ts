@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-//import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes";
 // import { initializeNotificationSystem } from "./notifications";
 import serverless from 'serverless-http';
 
@@ -35,7 +35,7 @@ app.use((req, res, next) => {
 });
 
 // Call registerRoutes and initializeNotificationSystem directly.
-//registerRoutes(app);
+registerRoutes(app);
 // initializeNotificationSystem();
 // log("Notification system initialized");
 
