@@ -16,7 +16,7 @@ import {
   markAllNotificationsAsRead,
   createFollowupCompletionNotification
 } from "./notifications";
-import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+//import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 //import { uploadRouter, serveUploads } from "./uploads";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -711,29 +711,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", apiRouter);
 
   // PayPal payment routes
-  app.get("/setup", async (req, res) => {
-    await loadPaypalDefault(req, res);
-  });
+  //app.get("/setup", async (req, res) => {
+   // await loadPaypalDefault(req, res);
+ // });
 
-  app.post("/order", async (req, res) => {
+  //app.post("/order", async (req, res) => {
     // Get the user ID from the request for upgrading the right account
-    const userId = req.headers['x-user-id'] as string || 'default-user';
-    console.log(`Creating payment order for user: ${userId}`);
-    await createPaypalOrder(req, res);
-  });
+    //const userId = req.headers['x-user-id'] as string || 'default-user';
+    //console.log(`Creating payment order for user: ${userId}`);
+    //await createPaypalOrder(req, res);
+  //});
 
-  app.post("/order/:orderID/capture", async (req, res) => {
-    try {
+  //app.post("/order/:orderID/capture", async (req, res) => {
+    //try {
       // Get the user ID from the request for upgrading the right account
-      const userId = req.headers['x-user-id'] as string || 'default-user';
-      console.log(`Processing payment capture for user: ${userId}`);
+     // const userId = req.headers['x-user-id'] as string || 'default-user';
+     // console.log(`Processing payment capture for user: ${userId}`);
       
       // Capture the payment through PayPal
-      const captureResponse = await capturePaypalOrder(req, res);
+      //const captureResponse = await capturePaypalOrder(req, res);
       
       // Store a record that this user has a paid account
       // In a real implementation, you would update the user's subscription status in the database
-      console.log(`Payment successful for user ${userId}. Upgrading account to paid tier.`);
+      //console.log(`Payment successful for user ${userId}. Upgrading account to paid tier.`);
       
       // You would normally update your database here with the subscription info
       // storage.updateUserSubscription(userId, {
@@ -743,12 +743,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       //   subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
       // });
       
-      return captureResponse;
-    } catch (error) {
-      console.error("Error processing payment capture:", error);
-      throw error;
-    }
-  });
+     // return captureResponse;
+    //} catch (error) {
+     // console.error("Error processing payment capture:", error);
+      //throw error;
+    //}
+ // });
 
   // Unsubscription and data management routes
   apiRouter.post("/unsubscribe", async (req: Request, res: Response) => {
