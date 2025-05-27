@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     //               req.query.userId || 
     //               'default-user';
     // return userId as string;
-  };
+  //};
 
   // Clients endpoints with user isolation
   // apiRouter.get("/clients", async (req: Request, res: Response) => {
