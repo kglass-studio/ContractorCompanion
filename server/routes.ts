@@ -82,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the user ID from the authenticated session or request
       const userId = getUserId(req);
       
-       Prepare client data with user ID
+      // Prepare client data with user ID
       const rawClientData = { ...req.body, userId };
       const clientData = insertClientSchema.parse(rawClientData);
       
