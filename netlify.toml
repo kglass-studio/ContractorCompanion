@@ -6,3 +6,7 @@
   from = "/api/*"
   to = "/.netlify/functions/server/:splat"
   status = 200
+
+[functions]
+  included_files = ["server/**", "node_modules/@neondatabase/**"]
+  external_node_modules = ["rollup"]
