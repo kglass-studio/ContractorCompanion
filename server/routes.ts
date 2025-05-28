@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
    try {
       console.log("Client creation request received:", req.body);
       
-       Get the user ID from the authenticated session or request
+      // Get the user ID from the authenticated session or request
       const userId = getUserId(req);
       
        Prepare client data with user ID
