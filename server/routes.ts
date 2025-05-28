@@ -37,23 +37,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // return userId as string;
   //};
 
-  // Clients endpoints with user isolation
-  // apiRouter.get("/clients", async (req: Request, res: Response) => {
-  //   const status = req.query.status as string | undefined;
-  //   const userId = getUserId(req);
+  Clients endpoints with user isolation
+  apiRouter.get("/clients", async (req: Request, res: Response) => {
+    const status = req.query.status as string | undefined;
+    const userId = getUserId(req);
     
-  //   try {
-  //     if (status) {
-  //       const clients = await storage.getClientsByStatus(userId, status);
-  //       res.json(clients);
-  //     } else {
-  //       const clients = await storage.getClients(userId);
-  //       res.json(clients);
-  //     }
-  //   } catch (error) {
-  //     res.status(500).json({ message: "Failed to fetch clients" });
-  //   }
-  // });
+    try {
+      if (status) {
+        const clients = await storage.getClientsByStatus(userId, status);
+        res.json(clients);
+      } else {
+        const clients = await storage.getClients(userId);
+        res.json(clients);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
 
   // apiRouter.get("/clients/:id", async (req: Request, res: Response) => {
   //   try {
@@ -75,30 +75,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //   }
   // });
 
- // apiRouter.post("/clients", async (req: Request, res: Response) => {
-   // try {
-     // console.log("Client creation request received:", req.body);
+  apiRouter.post("/clients", async (req: Request, res: Response) => {
+   try {
+      console.log("Client creation request received:", req.body);
       
-      // Get the user ID from the authenticated session or request
-     // const userId = getUserId(req);
+       Get the user ID from the authenticated session or request
+      const userId = getUserId(req);
       
-      // Prepare client data with user ID
-     // const rawClientData = { ...req.body, userId };
-    //  const clientData = insertClientSchema.parse(rawClientData);
+       Prepare client data with user ID
+      const rawClientData = { ...req.body, userId };
+      const clientData = insertClientSchema.parse(rawClientData);
       
-     // console.log("Validated client data:", clientData);
-     // const client = await storage.createClient(clientData);
-      //console.log("Client created:", client);
-     // res.status(201).json(client);
-   // } catch (error) {
-     // console.error("Error creating client:", error);
-     // if (error instanceof z.ZodError) {
-      //  const validationError = fromZodError(error);
-       // return res.status(400).json({ message: validationError.message });
-     // }
-     // res.status(500).json({ message: "Failed to create client" });
-   // }
-  //});
+      console.log("Validated client data:", clientData);
+      const client = await storage.createClient(clientData);
+      console.log("Client created:", client);
+      res.status(201).json(client);
+    } catch (error) {
+      console.error("Error creating client:", error);
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to create client" });
+    }
+  });
 
   // Special route just for updating client status
   // apiRouter.post("/clients/:id/update-status", async (req: Request, res: Response) => {
