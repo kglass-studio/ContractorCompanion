@@ -9,4 +9,4 @@
 
 [functions]
   included_files = ["server/**", "node_modules/@neondatabase/**", "node_modules/postgres/**"]
-  external_node_modules = ["rollup", "vite"]
+  external_node_modules = ["rollup", "vite", "@types/pg"]
