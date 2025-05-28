@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // return userId as string;
   //};
 
-  Clients endpoints with user isolation
+  //Clients endpoints with user isolation
   apiRouter.get("/clients", async (req: Request, res: Response) => {
     const status = req.query.status as string | undefined;
     const userId = getUserId(req);
